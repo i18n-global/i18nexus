@@ -1,6 +1,6 @@
 {
   "name": "i18nexus-tools",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "CLI tools for i18nexus - automate i18n workflows with code transformation, translation extraction, and Google Sheets integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,8 @@
     "i18n-wrapper": "dist/bin/i18n-wrapper.js",
     "i18n-extractor": "dist/bin/i18n-extractor.js",
     "i18n-upload": "dist/bin/i18n-upload.js",
-    "i18n-download": "dist/bin/i18n-download.js"
+    "i18n-download": "dist/bin/i18n-download.js",
+    "i18n-sheets": "dist/bin/i18n-sheets.js"
   },
   "scripts": {
     "build": "npm run clean && tsc && npm run postbuild",

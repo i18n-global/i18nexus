@@ -5,9 +5,11 @@
 ## 설치
 
 ```bash
+# 전역 설치 (권장)
 npm install -g i18nexus-tools
+
 # 또는 프로젝트에 설치
-npm install i18nexus-tools --save-dev
+npm install -D i18nexus-tools
 ```
 
 ## 🚀 빠른 시작
@@ -16,11 +18,13 @@ npm install i18nexus-tools --save-dev
 
 ```bash
 # i18nexus 프로젝트 초기화
-i18n-sheets init
+npx i18n-sheets init
 
 # Google Sheets 연동 초기화 (선택사항)
-i18n-sheets init -s <spreadsheet-id> -c ./credentials.json
+npx i18n-sheets init -s <spreadsheet-id> -c ./credentials.json
 ```
+
+> **참고**: `npx`를 사용하면 전역 설치 없이 바로 실행할 수 있습니다. 전역 설치한 경우 `npx` 없이 `i18n-sheets init`으로 실행할 수 있습니다.
 
 초기화 시 다음 파일들이 생성됩니다:
 
@@ -52,13 +56,13 @@ i18n-sheets init -s <spreadsheet-id> -c ./credentials.json
 
 ```bash
 # 기본 사용법 - src/** 에서 한국어 텍스트 처리
-i18n-wrapper
+npx i18n-wrapper
 
 # 커스텀 패턴과 네임스페이스
-i18n-wrapper -p "app/**/*.tsx" -n "components"
+npx i18n-wrapper -p "app/**/*.tsx" -n "components"
 
 # 변경사항 미리보기
-i18n-wrapper --dry-run
+npx i18n-wrapper --dry-run
 ```
 
 **특징:**
@@ -74,16 +78,16 @@ i18n-wrapper --dry-run
 
 ```bash
 # 기본 사용법 - locales/en.json, locales/ko.json에 추출
-i18n-extractor
+npx i18n-extractor
 
 # 커스텀 패턴과 출력 디렉토리
-i18n-extractor -p "app/**/*.tsx" -d "./public/locales"
+npx i18n-extractor -p "app/**/*.tsx" -d "./public/locales"
 
 # CSV 형식으로 추출 (Google Sheets 용)
-i18n-extractor -f csv -o "translations.csv"
+npx i18n-extractor -f csv -o "translations.csv"
 
 # 추출 결과 미리보기
-i18n-extractor --dry-run
+npx i18n-extractor --dry-run
 ```
 
 **특징:**
@@ -100,16 +104,16 @@ Google Sheets를 통해 번역 관리를 쉽게 할 수 있습니다.
 
 ```bash
 # 로컬 번역 파일을 Google Sheets에 업로드
-i18n-sheets upload -s <spreadsheet-id>
+npx i18n-sheets upload -s <spreadsheet-id>
 
 # Google Sheets에서 번역 다운로드
-i18n-sheets download -s <spreadsheet-id>
+npx i18n-sheets download -s <spreadsheet-id>
 
 # 양방향 동기화
-i18n-sheets sync -s <spreadsheet-id>
+npx i18n-sheets sync -s <spreadsheet-id>
 
 # 상태 확인
-i18n-sheets status -s <spreadsheet-id>
+npx i18n-sheets status -s <spreadsheet-id>
 ```
 
 ## 📱 Next.js App Directory 사용자 가이드
@@ -212,19 +216,19 @@ export default function Welcome() {
 
 ```bash
 # 1. 프로젝트 초기화
-i18n-sheets init
+npx i18n-sheets init
 
 # 2. app 디렉토리의 하드코딩된 텍스트를 t() 함수로 래핑
-i18n-wrapper -p "app/**/*.{ts,tsx}"
+npx i18n-wrapper -p "app/**/*.{ts,tsx}"
 
 # 3. 번역 키를 en.json과 ko.json에 추출
-i18n-extractor -p "app/**/*.{ts,tsx}" -d "./locales"
+npx i18n-extractor -p "app/**/*.{ts,tsx}" -d "./locales"
 
 # 4. 번역 작업 (선택사항 - Google Sheets 사용)
-i18n-sheets upload -s <spreadsheet-id>
+npx i18n-sheets upload -s <spreadsheet-id>
 
 # 5. 번역 완료 후 다운로드
-i18n-sheets download -s <spreadsheet-id>
+npx i18n-sheets download -s <spreadsheet-id>
 ```
 
 ### 6. 주요 차이점 (Pages vs App Directory)
@@ -266,7 +270,7 @@ export default function Welcome() {
 ### 2단계: 번역 키 추출
 
 ```bash
-i18n-extractor -p "src/**/*.tsx" -d "./locales"
+npx i18n-extractor -p "src/**/*.tsx" -d "./locales"
 ```
 
 생성된 파일:
@@ -329,20 +333,20 @@ i18n-extractor -p "src/**/*.tsx" -d "./locales"
 
 ### 기본 워크플로우
 
-1. **초기화**: `i18n-sheets init`으로 프로젝트 설정
+1. **초기화**: `npx i18n-sheets init`으로 프로젝트 설정
 2. **개발**: 한국어로 하드코딩하여 개발
-3. **변환**: `i18n-wrapper`로 t() 함수 래핑
-4. **추출**: `i18n-extractor`로 번역 키를 en.json, ko.json에 추출
+3. **변환**: `npx i18n-wrapper`로 t() 함수 래핑
+4. **추출**: `npx i18n-extractor`로 번역 키를 en.json, ko.json에 추출
 5. **번역**: 영어 번역 추가
 6. **배포**: 다국어 지원 완료
 
 ### Google Sheets 워크플로우
 
-1. **초기화**: `i18n-sheets init -s <spreadsheet-id>`
+1. **초기화**: `npx i18n-sheets init -s <spreadsheet-id>`
 2. **개발 & 변환**: 위와 동일
-3. **업로드**: `i18n-sheets upload`로 Google Sheets에 업로드
+3. **업로드**: `npx i18n-sheets upload`로 Google Sheets에 업로드
 4. **번역**: 번역가가 Google Sheets에서 작업
-5. **다운로드**: `i18n-sheets download`로 번역 다운로드
+5. **다운로드**: `npx i18n-sheets download`로 번역 다운로드
 6. **배포**: 다국어 지원 완료
 
 ## Google Sheets 설정
@@ -361,7 +365,7 @@ i18n-extractor -p "src/**/*.tsx" -d "./locales"
 1. 새 Google Spreadsheet 생성
 2. Service Account 이메일과 공유
 3. URL에서 Spreadsheet ID 복사
-4. `i18n-sheets init -s <spreadsheet-id>`로 초기화
+4. `npx i18n-sheets init -s <spreadsheet-id>`로 초기화
 
 ## 관련 패키지
 
