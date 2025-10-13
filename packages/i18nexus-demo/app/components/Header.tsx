@@ -11,8 +11,10 @@ export default function Header() {
 
   const navItems = [
     { href: "/", label: "Home", emoji: "🏠" },
+    { href: "/getting-started", label: "Getting Started", emoji: "🚀" },
     { href: "/provider", label: "Provider", emoji: "🎨" },
     { href: "/cli", label: "CLI", emoji: "⚡" },
+    { href: "/server-example", label: "Server", emoji: "🖥️" },
   ];
 
   return (
@@ -40,8 +42,7 @@ export default function Header() {
                     pathname === item.href
                       ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                >
+                  }`}>
                   <span className="mr-1.5">{item.emoji}</span>
                   {item.label}
                 </Link>
@@ -59,8 +60,7 @@ export default function Header() {
                   currentLanguage === lang.code
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-105"
                     : "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700"
-                }`}
-              >
+                }`}>
                 <span className="mr-1.5">{lang.flag}</span>
                 {lang.name}
               </button>
@@ -79,8 +79,7 @@ export default function Header() {
                   pathname === item.href
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
                     : "text-slate-400 hover:text-white hover:bg-slate-800"
-                }`}
-              >
+                }`}>
                 <span className="mr-2">{item.emoji}</span>
                 {item.label}
               </Link>

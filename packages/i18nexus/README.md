@@ -8,9 +8,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-**🌍 Complete React i18n toolkit with intelligent automation**
+**🌍 Complete React i18n toolkit with intelligent automation and Server Components support**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [CLI Tools](#-cli-tools) • [Demo](#-demo) • [API](#-api) • [Contributing](#-contributing)
+[Features](#-features) • [Quick Start](#-quick-start) • [Server Components](#-server-components) • [CLI Tools](#-cli-tools) • [API](#-api)
 
 </div>
 
@@ -18,12 +18,13 @@
 
 ## 🚀 What is i18nexus?
 
-i18nexus is a comprehensive React internationalization toolkit that **automates the entire i18n workflow**. From automatically wrapping hardcoded strings to seamless Google Sheets integration, i18nexus eliminates the tedious manual work of internationalization.
+i18nexus is a comprehensive React internationalization toolkit that **automates the entire i18n workflow**. With full Next.js App Router support (including Server Components), automatic string wrapping, and seamless Google Sheets integration, i18nexus eliminates the tedious manual work of internationalization.
 
 ### ✨ Why i18nexus?
 
 - **🤖 Zero Manual Work**: Automatically detect and wrap hardcoded strings
-- **🔄 Seamless Workflow**: Extract → Translate → Deploy in minutes
+- **🖥️ Server Components**: Full Next.js App Router support with zero hydration issues
+- **🔄 Seamless Workflow**: Init → Wrap → Extract → Translate in minutes
 - **🍪 Smart Persistence**: Cookie-based language management with SSR support
 - **📊 Team Collaboration**: Direct Google Sheets integration for translators
 - **🎯 Developer Friendly**: CLI tools that integrate into any workflow
@@ -32,19 +33,26 @@ i18nexus is a comprehensive React internationalization toolkit that **automates 
 
 ## 🌟 Features
 
+### 🖥️ Server & Client Components Support
+
+- **Server Components**: Use `createServerTranslation()` for optimal performance
+- **Client Components**: Use `useTranslation()` hook for dynamic interactions
+- **Zero Hydration Mismatch**: Server and client always in sync
+- **Automatic Cookie Reading**: Language persists across page reloads
+
 ### 🔧 Smart Code Transformation
 
 - **Automatic Detection**: Finds hardcoded Korean and English strings in JSX
 - **Intelligent Wrapping**: Wraps strings with `t()` functions automatically
-- **Hook Injection**: Adds `useTranslation` hooks where needed
+- **Import Management**: Adds necessary imports where needed
 - **TypeScript Support**: Full TypeScript compatibility
 
 ### 🔍 Translation Key Extraction
 
 - **Comprehensive Scanning**: Extracts all `t()` wrapped keys from your codebase
-- **Multiple Formats**: Generate JSON, CSV files for translators
-- **Smart Organization**: Maintains consistent key structures
-- **Incremental Updates**: Only processes changed files
+- **Smart Merging**: Preserves existing translations, only adds new keys
+- **Multi-language Support**: Generate files for all your languages
+- **Config-based**: Use `i18nexus.config.json` for project settings
 
 ### 📊 Google Sheets Integration
 
@@ -53,13 +61,6 @@ i18nexus is a comprehensive React internationalization toolkit that **automates 
 - **Version Control**: Track translation changes and updates
 - **Batch Operations**: Handle multiple languages simultaneously
 
-### 🍪 Advanced Language Management
-
-- **Cookie Persistence**: Language settings survive browser refreshes
-- **SSR Compatible**: Works seamlessly with Next.js and other SSR frameworks
-- **Auto-detection**: Detect user's preferred language automatically
-- **Flexible Configuration**: Customizable cookie settings and fallbacks
-
 ---
 
 ## 🚀 Quick Start
@@ -67,83 +68,38 @@ i18nexus is a comprehensive React internationalization toolkit that **automates 
 ### Installation
 
 ```bash
-npm install i18nexus react-i18next i18next
+npm install i18nexus
 ```
 
-### Basic Setup
+### 1. Initialize Project
 
-```tsx
-// App.tsx
-import { I18nProvider } from "i18nexus";
-
-function App() {
-  return (
-    <I18nProvider
-      languageManagerOptions={{
-        defaultLanguage: "en",
-        availableLanguages: [
-          { code: "en", name: "English", flag: "🇺🇸" },
-          { code: "ko", name: "한국어", flag: "🇰🇷" },
-        ],
-      }}>
-      {/* Your app */}
-    </I18nProvider>
-  );
-}
+```bash
+npx i18n-sheets init
 ```
 
-### Using Translations
+This creates:
 
-```tsx
-import { useTranslation, useLanguageSwitcher } from "i18nexus";
+- `i18nexus.config.json` - Project configuration
+- `locales/` directory - Translation files (ko.json, en.json)
 
-function MyComponent() {
-  const { t } = useTranslation();
-  const { currentLanguage, changeLanguage } = useLanguageSwitcher();
-
-  return (
-    <div>
-      <h1>{t("welcome")}</h1>
-      <button onClick={() => changeLanguage("ko")}>Switch to Korean</button>
-    </div>
-  );
-}
-```
-
-### Next.js App Router Setup
-
-For Next.js App Router (Next.js 13+), use the server-side utilities to prevent hydration mismatches:
+### 2. Setup I18nProvider (Next.js App Router)
 
 ```tsx
 // app/layout.tsx
 import { headers } from "next/headers";
 import { I18nProvider } from "i18nexus";
 import { getServerLanguage } from "i18nexus/server";
+import { translations } from "@/lib/i18n";
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }) {
   // Read language from cookies on the server
   const headersList = await headers();
-  const language = getServerLanguage(headersList, {
-    cookieName: "i18n-language",
-    defaultLanguage: "en",
-  });
+  const language = getServerLanguage(headersList);
 
   return (
     <html lang={language}>
       <body>
-        <I18nProvider
-          initialLanguage={language}
-          languageManagerOptions={{
-            defaultLanguage: "en",
-            availableLanguages: [
-              { code: "en", name: "English", flag: "🇺🇸" },
-              { code: "ko", name: "한국어", flag: "🇰🇷" },
-            ],
-          }}>
+        <I18nProvider initialLanguage={language} translations={translations}>
           {children}
         </I18nProvider>
       </body>
@@ -152,16 +108,97 @@ export default async function RootLayout({
 }
 ```
 
-**Why this approach?**
+```tsx
+// lib/i18n.ts
+import en from "../locales/en.json";
+import ko from "../locales/ko.json";
 
-- ✅ **No hydration mismatch**: Server and client render with the same language
-- ✅ **No import errors**: Proper package exports for server/client separation
-- ✅ **SEO friendly**: Correct `lang` attribute on first render
-- ✅ **Fast**: No layout shift from language detection
+export const translations = {
+  en,
+  ko,
+};
+```
 
-**Using in Client Components:**
+### 3. Wrap Korean Text
+
+```bash
+npx i18n-wrapper
+```
+
+**⚠️ Important: Check for Server Components**
+
+After running `i18n-wrapper`, some files may have errors because:
+
+1. If the file is a Server Component (no `'use client'`), you need to use server utilities
+2. Check the error and decide whether to:
+   - Add `'use client'` directive
+   - Use `createServerTranslation()` for Server Components
+
+### 4. Extract Translation Keys
+
+```bash
+# For Next.js App Router
+npx i18n-extractor -p "app/**/*.tsx"
+
+# For src/ directory
+npx i18n-extractor -p "src/**/*.tsx"
+```
+
+This will create/update:
+
+- `locales/ko.json` - Korean translations (auto-filled)
+- `locales/en.json` - English translations (needs manual translation)
+
+### 5. Add English Translations
+
+Open `locales/en.json` and add English translations:
+
+```json
+{
+  "안녕하세요": "Hello",
+  "환영합니다": "Welcome"
+}
+```
+
+---
+
+## 🖥️ Server Components
+
+i18nexus provides full support for Next.js Server Components with dedicated utilities.
+
+### Why Use Server Components?
+
+- ✅ **Smaller JavaScript bundle** - No React Context or hooks sent to client
+- ✅ **Faster initial load** - Translations rendered on server
+- ✅ **Better SEO** - Fully rendered HTML with correct language
+- ✅ **Zero hydration mismatch** - Server and client always in sync
+
+### Server Component Usage
 
 ```tsx
+// app/page.tsx (Server Component - no "use client")
+import { headers } from "next/headers";
+import { getServerLanguage, createServerTranslation } from "i18nexus/server";
+import { translations } from "@/lib/i18n";
+
+export default async function Page() {
+  const headersList = await headers();
+  const language = getServerLanguage(headersList);
+  const t = createServerTranslation(language, translations);
+
+  return (
+    <div>
+      <h1>{t("Welcome")}</h1>
+      <p>{t("This is a server component")}</p>
+    </div>
+  );
+}
+```
+
+### Client Component Usage
+
+```tsx
+// app/components/LanguageSwitcher.tsx
 "use client";
 
 import { useTranslation, useLanguageSwitcher } from "i18nexus";
@@ -174,194 +211,125 @@ export default function LanguageSwitcher() {
   return (
     <div>
       <p>
-        {t("currentLanguage")}: {currentLanguage}
+        {t("Current Language")}: {currentLanguage}
       </p>
-      <select
-        value={currentLanguage}
-        onChange={(e) => changeLanguage(e.target.value)}>
-        {availableLanguages.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {lang.flag} {lang.name}
-          </option>
-        ))}
-      </select>
+      {availableLanguages.map((lang) => (
+        <button
+          key={lang.code}
+          onClick={() => changeLanguage(lang.code)}
+          className={currentLanguage === lang.code ? "active" : ""}>
+          {lang.flag} {lang.name}
+        </button>
+      ))}
     </div>
   );
 }
 ```
 
+### Comparison
+
+| Feature            | Server Components           | Client Components  |
+| ------------------ | --------------------------- | ------------------ |
+| Bundle Size        | ✅ Smaller                  | ⚠️ Larger          |
+| Performance        | ✅ Faster                   | ⚠️ Slower          |
+| Language Switching | ❌ Requires reload          | ✅ Dynamic         |
+| Interactivity      | ❌ Static                   | ✅ Full            |
+| Usage              | `createServerTranslation()` | `useTranslation()` |
+| Directive          | None                        | `"use client"`     |
+
 ---
 
 ## 🛠️ CLI Tools
 
-i18nexus provides powerful CLI tools that automate your entire i18n workflow:
+### npx i18n-sheets init
 
-### 1. 🔧 i18n-wrapper
-
-**Automatically wrap hardcoded strings with t() functions**
+Initialize i18nexus project with configuration and translation files.
 
 ```bash
-# Basic usage - scan all TypeScript/JavaScript files
+npx i18n-sheets init
+```
+
+Creates:
+
+- `i18nexus.config.json`
+- `locales/ko.json`
+- `locales/en.json`
+
+### npx i18n-wrapper
+
+Automatically wrap hardcoded Korean strings with `t()` functions.
+
+```bash
+# Basic usage
 npx i18n-wrapper
 
-# Target specific files or directories
-npx i18n-wrapper --pattern "src/components/**/*.{ts,tsx}"
-
-# Dry run to see what would be changed
-npx i18n-wrapper --dry-run
-
-# Include specific file types
-npx i18n-wrapper --pattern "src/**/*.{js,jsx,ts,tsx}"
+# Custom pattern
+npx i18n-wrapper -p "app/**/*.tsx"
 ```
 
 **What it does:**
 
-- ✅ Detects hardcoded Korean and English strings in JSX
-- ✅ Wraps them with `t('key')` functions
-- ✅ Automatically adds `useTranslation` imports and hooks
-- ✅ Preserves existing code structure and formatting
-- ✅ Handles complex JSX expressions safely
+- Detects Korean text in JSX
+- Wraps with `t()`
+- Adds imports if needed
 
-**Example transformation:**
+### npx i18n-extractor
 
-```tsx
-// Before
-function Welcome() {
-  return <h1>Welcome to our app!</h1>;
-}
-
-// After
-import { useTranslation } from "react-i18next";
-
-function Welcome() {
-  const { t } = useTranslation();
-  return <h1>{t("welcomeToOurApp")}</h1>;
-}
-```
-
-### 2. 🔍 i18n-extractor
-
-**Extract translation keys and generate translation files**
+Extract translation keys from your code.
 
 ```bash
-# Extract keys to JSON format
-npx i18n-extractor --output-format json
+# For App Router
+npx i18n-extractor -p "app/**/*.tsx"
 
-# Extract to CSV for translators
-npx i18n-extractor --output-format csv
-
-# Specify output directory
-npx i18n-extractor --output-dir "./locales"
-
-# Extract from specific files
-npx i18n-extractor --pattern "src/**/*.tsx"
+# For src directory
+npx i18n-extractor -p "src/**/*.tsx"
 ```
 
-**Generated output:**
+**Features:**
 
-```json
-{
-  "welcomeToOurApp": "Welcome to our app!",
-  "loginButton": "Login",
-  "signupPrompt": "Don't have an account?"
-}
-```
+- Smart merging (preserves existing translations)
+- Adds only new keys
+- Sorts keys alphabetically
 
-### 3. 📤 i18n-upload
+### npx i18n-sheets upload
 
-**Upload translations to Google Sheets**
+Upload translations to Google Sheets.
 
 ```bash
-# Upload with Google Sheets credentials
-npx i18n-upload \
-  --spreadsheet-id "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" \
-  --credentials "./google-credentials.json"
-
-# Specify local translation directory
-npx i18n-upload \
-  --spreadsheet-id "your-sheet-id" \
-  --locales-dir "./locales"
-
-# Upload specific sheet
-npx i18n-upload \
-  --spreadsheet-id "your-sheet-id" \
-  --sheet-name "App Translations"
+npx i18n-sheets upload -s YOUR_SPREADSHEET_ID
 ```
 
-### 4. 📥 i18n-download
+### npx i18n-sheets download
 
-**Download translations from Google Sheets**
+Download translations from Google Sheets.
 
 ```bash
-# Download all languages
-npx i18n-download --spreadsheet-id "your-sheet-id"
-
-# Download specific languages
-npx i18n-download \
-  --spreadsheet-id "your-sheet-id" \
-  --languages "en,ko,ja"
-
-# Save to specific directory
-npx i18n-download \
-  --spreadsheet-id "your-sheet-id" \
-  --locales-dir "./public/locales"
+npx i18n-sheets download -s YOUR_SPREADSHEET_ID
 ```
 
-### 🔄 Complete Workflow Example
+### Complete Workflow
 
 ```bash
-# 1. Wrap hardcoded strings in your React components
-npx i18n-wrapper --pattern "src/**/*.{ts,tsx}"
+# 1. Initialize project
+npx i18n-sheets init
 
-# 2. Extract translation keys to JSON
-npx i18n-extractor --output-format json --output-dir "./locales"
+# 2. Setup I18nProvider in layout.tsx
+# (See Quick Start section)
 
-# 3. Upload to Google Sheets for translation
-npx i18n-upload --spreadsheet-id "your-sheet-id" --locales-dir "./locales"
+# 3. Wrap Korean text
+npx i18n-wrapper -p "app/**/*.tsx"
 
-# 4. Download translated content
-npx i18n-download --spreadsheet-id "your-sheet-id" --locales-dir "./public/locales"
+# 4. Check and fix Server Components
+# (Add 'use client' or use createServerTranslation)
+
+# 5. Extract keys
+npx i18n-extractor -p "app/**/*.tsx"
+
+# 6. Add English translations in locales/en.json
+
+# 7. (Optional) Sync with Google Sheets
+npx i18n-sheets upload -s YOUR_SPREADSHEET_ID
 ```
-
----
-
-## 📊 Google Sheets Setup
-
-### 1. Create Google Service Account
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable Google Sheets API
-4. Create Service Account credentials
-5. Download JSON credentials file
-
-### 2. Setup Google Sheet
-
-1. Create a new Google Sheet
-2. Share it with your service account email
-3. Set up columns: `key`, `en`, `ko`, etc.
-
-### 3. Configure i18nexus
-
-```bash
-# Set up credentials
-export GOOGLE_APPLICATION_CREDENTIALS="./path/to/credentials.json"
-
-# Or pass directly to CLI
-npx i18n-upload --credentials "./credentials.json" --spreadsheet-id "your-id"
-```
-
----
-
-## 🎯 Demo
-
-Try out i18nexus features in our interactive demo:
-
-**🌐 [Live Demo](http://localhost:3003)**
-
-- **Home**: Overview and feature showcase
-- **Demo**: Interactive before/after comparison
-- **CLI Test**: Try CLI tools on sample code
 
 ---
 
@@ -373,109 +341,114 @@ Try out i18nexus features in our interactive demo:
 interface I18nProviderProps {
   children: ReactNode;
   languageManagerOptions?: LanguageManagerOptions;
-  onLanguageChange?: (language: string) => void;
-  initialLanguage?: string; // For SSR/Next.js - prevents hydration mismatch
   translations?: Record<string, Record<string, string>>;
+  onLanguageChange?: (language: string) => void;
+  initialLanguage?: string; // From getServerLanguage()
 }
 
 interface LanguageManagerOptions {
-  defaultLanguage: string;
-  availableLanguages: LanguageConfig[];
-  enableAutoDetection?: boolean;
+  defaultLanguage?: string; // default: 'en'
+  availableLanguages?: LanguageConfig[];
+  cookieName?: string; // default: 'i18n-language'
   cookieOptions?: CookieOptions;
-  cookieName?: string;
-  enableLocalStorage?: boolean;
-  storageKey?: string;
+}
+
+interface LanguageConfig {
+  code: string;
+  name: string;
+  flag?: string;
+  direction?: "ltr" | "rtl";
 }
 ```
 
 ### Server-side Utilities
 
-For Next.js App Router and SSR:
-
 ```tsx
-import { getServerLanguage } from 'i18nexus/server';
+import {
+  getServerLanguage,
+  createServerTranslation,
+  getServerTranslations
+} from "i18nexus/server";
 
-// Read language from headers in Server Components
+// Get language from cookies
 const language = getServerLanguage(headers, {
   cookieName?: string;      // default: 'i18n-language'
   defaultLanguage?: string; // default: 'en'
 });
+
+// Create translation function
+const t = createServerTranslation(language, translations);
+
+// Get raw translations object
+const dict = getServerTranslations(language, translations);
 ```
 
-### Hooks
-
-#### useTranslation
+### Client Hooks
 
 ```tsx
-const { t } = useTranslation();
-// Usage: t('key', { variable: 'value' })
+// Translation hook
+const { t, currentLanguage, isReady } = useTranslation();
+
+// Language switcher hook
+const {
+  currentLanguage,
+  availableLanguages,
+  changeLanguage,
+  switchToNextLanguage,
+  switchToPreviousLanguage,
+  isLoading,
+} = useLanguageSwitcher();
 ```
 
-#### useLanguageSwitcher
+---
 
-```tsx
-const { currentLanguage, changeLanguage, availableLanguages } =
-  useLanguageSwitcher();
+## 📊 Google Sheets Setup
+
+### 1. Create Service Account
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project
+3. Enable Google Sheets API
+4. Create Service Account
+5. Download JSON credentials
+
+### 2. Setup Google Sheet
+
+1. Create a new Google Spreadsheet
+2. Share it with your service account email
+3. Copy the spreadsheet ID from URL
+
+### 3. Use with CLI
+
+```bash
+npx i18n-sheets upload -s YOUR_SPREADSHEET_ID -c ./credentials.json
 ```
 
-### CLI Options
+---
 
-#### i18n-wrapper
+## 📁 Project Structure
 
-- `--pattern <glob>`: File pattern to process (default: `**/*.{js,jsx,ts,tsx}`)
-- `--dry-run`: Preview changes without writing files
-- `--verbose`: Show detailed processing information
-
-#### i18n-extractor
-
-- `--pattern <glob>`: File pattern to scan
-- `--output-format <json|csv>`: Output format (default: json)
-- `--output-dir <path>`: Output directory (default: ./locales)
-
-#### i18n-upload/download
-
-- `--spreadsheet-id <id>`: Google Sheets ID (required)
-- `--credentials <path>`: Google credentials JSON file
-- `--sheet-name <name>`: Sheet name (default: Translations)
-- `--locales-dir <path>`: Local translation directory
+```
+your-project/
+├── app/
+│   ├── layout.tsx          # I18nProvider setup
+│   ├── page.tsx            # Server or Client Component
+│   └── components/
+│       └── Header.tsx      # Client Component with useTranslation
+├── lib/
+│   └── i18n.ts            # Translation exports
+├── locales/
+│   ├── en.json            # English translations
+│   └── ko.json            # Korean translations
+├── i18nexus.config.json   # i18nexus configuration
+└── credentials.json       # Google Sheets credentials (optional)
+```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/i18nexus.git
-cd i18nexus
-
-# Install dependencies
-npm install
-
-# Run tests
-npm test
-
-# Build the project
-npm run build
-```
-
-### Project Structure
-
-```
-i18nexus/
-├── src/
-│   ├── components/     # React components
-│   ├── hooks/         # React hooks
-│   ├── utils/         # Utility functions
-│   ├── scripts/       # CLI tools
-│   └── bin/          # CLI executables
-├── demo/             # Demo application
-└── docs/            # Documentation
-```
+We welcome contributions! Please check out our [GitHub repository](https://github.com/manNomi/i18nexus).
 
 ---
 
@@ -485,19 +458,10 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
-
-- Built with [React](https://reactjs.org/) and [TypeScript](https://www.typescriptlang.org/)
-- Powered by [react-i18next](https://react.i18next.com/) and [i18next](https://www.i18next.com/)
-- CLI tools built with [Commander.js](https://github.com/tj/commander.js/)
-- Google Sheets integration via [googleapis](https://github.com/googleapis/google-api-nodejs-client)
-
----
-
 <div align="center">
 
-**Made with ❤️ by the i18nexus team**
+**Made with ❤️ for the React community**
 
-[⭐ Star us on GitHub](https://github.com/your-username/i18nexus) • [🐛 Report Issues](https://github.com/your-username/i18nexus/issues) • [💬 Discussions](https://github.com/your-username/i18nexus/discussions)
+[⭐ Star us on GitHub](https://github.com/manNomi/i18nexus) • [🐛 Report Issues](https://github.com/manNomi/i18nexus/issues)
 
 </div>

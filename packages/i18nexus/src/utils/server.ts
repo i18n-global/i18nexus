@@ -28,7 +28,7 @@ export function getServerLanguage(
   options?: {
     cookieName?: string;
     defaultLanguage?: string;
-  },
+  }
 ): string {
   const cookieName = options?.cookieName || "i18n-language";
   const defaultLanguage = options?.defaultLanguage || "en";
@@ -53,7 +53,7 @@ export function getServerLanguage(
  * Parse cookies from cookie header string
  */
 export function parseCookies(
-  cookieHeader: string | null,
+  cookieHeader: string | null
 ): Record<string, string> {
   if (!cookieHeader) {
     return {};
@@ -70,4 +70,57 @@ export function parseCookies(
   }
 
   return cookies;
+}
+
+/**
+ * Create server-side translation function for use in Server Components
+ *
+ * @example
+ * ```tsx
+ * import { createServerTranslation } from 'i18nexus/server';
+ * import { translations } from '@/lib/i18n';
+ *
+ * export default async function ServerPage() {
+ *   const headersList = await headers();
+ *   const language = getServerLanguage(headersList);
+ *   const t = createServerTranslation(language, translations);
+ *
+ *   return <h1>{t("Welcome")}</h1>;
+ * }
+ * ```
+ */
+export function createServerTranslation(
+  language: string,
+  translations: Record<string, Record<string, string>>
+) {
+  const currentTranslations =
+    translations[language] || translations["en"] || {};
+
+  return function translate(key: string, fallback?: string): string {
+    return currentTranslations[key] || fallback || key;
+  };
+}
+
+/**
+ * Get server-side translations object
+ *
+ * @example
+ * ```tsx
+ * import { getServerTranslations } from 'i18nexus/server';
+ * import { translations } from '@/lib/i18n';
+ *
+ * export default async function ServerPage() {
+ *   const headersList = await headers();
+ *   const language = getServerLanguage(headersList);
+ *   const dict = getServerTranslations(language, translations);
+ *
+ *   return <h1>{dict["Welcome"]}</h1>;
+ * }
+ * ```
+ */
+export function getServerTranslations(
+  language: string,
+  translations: Record<string, Record<string, string>>
+): Record<string, string> {
+  return translations[language] || translations["en"] || {};
 }

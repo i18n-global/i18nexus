@@ -1,0 +1,153 @@
+# Changelog
+
+## Recent Updates
+
+### Features Added
+
+#### 1. Enhanced README with App Directory Instructions
+
+- Added comprehensive guide for Next.js App Router (13+) users
+- Included specific setup instructions for App Directory vs Pages Directory
+- Added side-by-side comparison table
+- Provided complete workflow examples for both directory structures
+
+#### 2. Project Initialization Command
+
+- `i18n-sheets init` now creates a complete project setup:
+  - `i18nexus.config.json` - Centralized configuration file
+  - `locales/en.json` - English translation file (initially empty)
+  - `locales/ko.json` - Korean translation file (initially empty)
+  - Optional Google Sheets integration setup
+
+#### 3. Configuration Management
+
+- **New config file**: `i18nexus.config.json`
+- Supports configuration for:
+  - Languages (`languages: ["en", "ko"]`)
+  - Default language (`defaultLanguage: "ko"`)
+  - Locales directory (`localesDir: "./locales"`)
+  - Source file pattern (`sourcePattern: "src/**/*.{js,jsx,ts,tsx}"`)
+  - Google Sheets settings (optional)
+- All CLI commands now read from config file with command-line overrides
+
+#### 4. Enhanced Extractor Functionality
+
+- **Multi-language support**: Automatically creates/updates translation files for all configured languages
+- **Smart merging**: Preserves existing translations while adding new keys
+- **Language-specific behavior**:
+  - Korean (`ko.json`): Uses the key itself or `defaultValue` as translation
+  - English (`en.json`): Empty string for new keys (ready for translation)
+  - Other languages: Empty string for new keys (ready for translation)
+- Supports custom language lists via `--languages` flag
+
+#### 5. Improved CLI Commands
+
+**i18n-sheets init:**
+
+```bash
+# Basic initialization
+i18n-sheets init
+
+# With Google Sheets
+i18n-sheets init -s <spreadsheet-id> -c ./credentials.json
+
+# Custom languages
+i18n-sheets init --languages "en,ko,ja"
+```
+
+**i18n-extractor:**
+
+```bash
+# Extract to configured languages (from config)
+i18n-extractor
+
+# Custom languages
+i18n-extractor -l "en,ko,ja,zh"
+
+# Custom pattern (App Directory)
+i18n-extractor -p "app/**/*.tsx"
+```
+
+**i18n-wrapper:**
+
+```bash
+# Use pattern from config
+i18n-wrapper
+
+# Override with custom pattern
+i18n-wrapper -p "app/**/*.tsx"
+```
+
+### Breaking Changes
+
+- Configuration file format changed from `.ts` to `.json` for better compatibility
+- Extractor now outputs to `en.json` and `ko.json` by default (instead of single file)
+- All commands now read from `i18nexus.config.json` if available
+
+### Migration Guide
+
+#### From Previous Version
+
+1. **Run init command** to create new config structure:
+
+   ```bash
+   i18n-sheets init
+   ```
+
+2. **Update your config** in `i18nexus.config.json`:
+
+   ```json
+   {
+     "languages": ["en", "ko"],
+     "defaultLanguage": "ko",
+     "localesDir": "./locales",
+     "sourcePattern": "src/**/*.{js,jsx,ts,tsx}"
+   }
+   ```
+
+3. **Run extractor** to populate language files:
+   ```bash
+   i18n-extractor
+   ```
+
+#### For Next.js App Directory Users
+
+1. **Initialize project:**
+
+   ```bash
+   i18n-sheets init
+   ```
+
+2. **Update sourcePattern** in `i18nexus.config.json`:
+
+   ```json
+   {
+     "sourcePattern": "app/**/*.{js,jsx,ts,tsx}"
+   }
+   ```
+
+3. **Run the workflow:**
+   ```bash
+   i18n-wrapper
+   i18n-extractor
+   ```
+
+### Technical Improvements
+
+- Added TypeScript configuration (`tsconfig.json`)
+- Improved build process with proper type checking
+- Better error handling and user feedback
+- Consistent configuration loading across all commands
+- Automatic detection of config file
+- Fallback to sensible defaults when config is missing
+
+### Documentation
+
+- Comprehensive README with:
+  - Quick start guide
+  - App Directory specific instructions
+  - Configuration reference
+  - CLI command examples
+  - Complete workflow guides
+- Added inline code documentation
+- Improved help text in all commands

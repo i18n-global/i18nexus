@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
 import { runTranslationWrapper, ScriptConfig } from "../scripts/t-wrapper";
+import { loadConfig } from "../scripts/config-loader";
 
 const args = process.argv.slice(2);
-const config: Partial<ScriptConfig> = {};
+
+// i18nexus.config.js에서 설정 로드
+const projectConfig = loadConfig();
+const config: Partial<ScriptConfig> = {
+  sourcePattern: projectConfig.sourcePattern,
+};
 
 for (let i = 0; i < args.length; i++) {
   switch (args[i]) {

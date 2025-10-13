@@ -17,6 +17,7 @@ export interface ExtractorConfig {
   sortKeys?: boolean;
   dryRun?: boolean;
   outputFormat?: "json" | "csv";
+  languages?: string[]; // 언어 목록 추가
 }
 
 const DEFAULT_CONFIG: Required<ExtractorConfig> = {
@@ -29,6 +30,7 @@ const DEFAULT_CONFIG: Required<ExtractorConfig> = {
   sortKeys: true,
   dryRun: false,
   outputFormat: "json",
+  languages: ["en", "ko"], // 기본 언어
 };
 
 export interface ExtractedKey {
@@ -217,34 +219,76 @@ export class TranslationExtractor {
   }
 
   private writeOutputFile(data: any): void {
-    let outputPath: string;
-    let content: string;
-
-    if (this.config.outputFormat === "csv") {
-      // CSV 파일로 출력
-      const csvFileName = this.config.outputFile.replace(/\.json$/, ".csv");
-      outputPath = pathLib.join(this.config.outputDir, csvFileName);
-      content = data; // CSV는 이미 문자열
-    } else {
-      // JSON 파일로 출력 (기존)
-      outputPath = pathLib.join(this.config.outputDir, this.config.outputFile);
-      content = JSON.stringify(data, null, 2);
-    }
-
     // 디렉토리가 없으면 생성
     if (!fs.existsSync(this.config.outputDir)) {
       fs.mkdirSync(this.config.outputDir, { recursive: true });
     }
 
-    if (this.config.dryRun) {
-      console.log("📄 Dry run - output would be written to:", outputPath);
-      console.log("📄 Content preview:");
-      console.log(content.substring(0, 500) + "...");
-      return;
-    }
+    if (this.config.outputFormat === "csv") {
+      // CSV 파일로 출력
+      const csvFileName = this.config.outputFile.replace(/\.json$/, ".csv");
+      const outputPath = pathLib.join(this.config.outputDir, csvFileName);
+      const content = data; // CSV는 이미 문자열
 
-    fs.writeFileSync(outputPath, content);
-    console.log(`📝 Extracted translations written to: ${outputPath}`);
+      if (this.config.dryRun) {
+        console.log("📄 Dry run - output would be written to:", outputPath);
+        console.log("📄 Content preview:");
+        console.log(content.substring(0, 500) + "...");
+        return;
+      }
+
+      fs.writeFileSync(outputPath, content);
+      console.log(`📝 Extracted translations written to: ${outputPath}`);
+    } else {
+      // JSON 파일로 출력 - 각 언어별로 파일 생성
+      this.config.languages.forEach((lang) => {
+        const langFile = pathLib.join(this.config.outputDir, `${lang}.json`);
+
+        // 기존 번역 파일 읽기 (있다면)
+        let existingTranslations: { [key: string]: string } = {};
+        if (fs.existsSync(langFile)) {
+          try {
+            const existingContent = fs.readFileSync(langFile, "utf-8");
+            existingTranslations = JSON.parse(existingContent);
+          } catch (error) {
+            console.warn(
+              `⚠️  Failed to parse existing ${langFile}, will overwrite`
+            );
+          }
+        }
+
+        // 새로운 키 병합
+        const mergedTranslations = { ...existingTranslations };
+
+        Object.keys(data).forEach((key) => {
+          if (lang === "ko") {
+            // 한국어는 키를 그대로 또는 defaultValue 사용
+            mergedTranslations[key] = data[key] || key;
+          } else if (lang === "en") {
+            // 영어는 기존 번역이 있으면 유지, 없으면 빈 문자열
+            if (!mergedTranslations[key]) {
+              mergedTranslations[key] = "";
+            }
+          } else {
+            // 기타 언어도 기존 번역 유지, 없으면 빈 문자열
+            if (!mergedTranslations[key]) {
+              mergedTranslations[key] = "";
+            }
+          }
+        });
+
+        const content = JSON.stringify(mergedTranslations, null, 2);
+
+        if (this.config.dryRun) {
+          console.log(`📄 Dry run - output would be written to: ${langFile}`);
+          console.log(`📄 Content preview (${lang}):`);
+          console.log(content.substring(0, 500) + "...");
+        } else {
+          fs.writeFileSync(langFile, content);
+          console.log(`📝 Extracted translations written to: ${langFile}`);
+        }
+      });
+    }
   }
 
   public async extract(): Promise<void> {

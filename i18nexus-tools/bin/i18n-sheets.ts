@@ -5,10 +5,24 @@ import {
   GoogleSheetsManager,
   GoogleSheetsConfig,
 } from "../scripts/google-sheets";
+import { loadConfig } from "../scripts/config-loader";
 import * as fs from "fs";
 import * as path from "path";
 
 const program = new Command();
+
+// i18nexus.config.js에서 설정 로드 (init 명령 제외)
+let projectConfig: ReturnType<typeof loadConfig> | null = null;
+try {
+  if (!process.argv.includes("init")) {
+    projectConfig = loadConfig();
+  }
+} catch (error) {
+  // init 명령이 아닐 때만 경고
+  if (!process.argv.includes("init")) {
+    console.warn("⚠️  Could not load config, using command line options");
+  }
+}
 
 program
   .name("i18n-sheets")
@@ -21,33 +35,52 @@ const addCommonOptions = (cmd: Command) => {
     .option(
       "-c, --credentials <path>",
       "Path to Google service account credentials JSON file",
-      "./credentials.json"
+      projectConfig?.googleSheets?.credentialsPath || "./credentials.json"
     )
-    .option("-s, --spreadsheet <id>", "Google Spreadsheet ID")
-    .option("-w, --worksheet <name>", "Worksheet name", "Translations")
-    .option("-l, --locales <dir>", "Locales directory", "./locales");
+    .option(
+      "-s, --spreadsheet <id>",
+      "Google Spreadsheet ID",
+      projectConfig?.googleSheets?.spreadsheetId
+    )
+    .option(
+      "-w, --worksheet <name>",
+      "Worksheet name",
+      projectConfig?.googleSheets?.sheetName || "Translations"
+    )
+    .option(
+      "-l, --locales <dir>",
+      "Locales directory",
+      projectConfig?.localesDir || "./locales"
+    );
 };
 
 // 환경 설정 확인
 const checkConfig = (options: any): GoogleSheetsConfig => {
-  if (!options.spreadsheet) {
+  const spreadsheetId =
+    options.spreadsheet || projectConfig?.googleSheets?.spreadsheetId;
+  const credentialsPath =
+    options.credentials ||
+    projectConfig?.googleSheets?.credentialsPath ||
+    "./credentials.json";
+
+  if (!spreadsheetId) {
     console.error(
-      "❌ Spreadsheet ID is required. Use -s option or set GOOGLE_SPREADSHEET_ID environment variable."
+      "❌ Spreadsheet ID is required. Use -s option, set in i18nexus.config.js, or set GOOGLE_SPREADSHEET_ID environment variable."
     );
     process.exit(1);
   }
 
-  if (!fs.existsSync(options.credentials)) {
-    console.error(`❌ Credentials file not found: ${options.credentials}`);
+  if (!fs.existsSync(credentialsPath)) {
+    console.error(`❌ Credentials file not found: ${credentialsPath}`);
     console.error(
-      "Please download your Google Service Account key file and specify its path with -c option."
+      "Please download your Google Service Account key file and specify its path with -c option or in i18nexus.config.js."
     );
     process.exit(1);
   }
 
   return {
-    credentialsPath: options.credentials,
-    spreadsheetId: options.spreadsheet,
+    credentialsPath,
+    spreadsheetId,
     sheetName: options.worksheet,
   };
 };
@@ -81,7 +114,11 @@ addCommonOptions(
   program
     .command("download")
     .description("Download translations from Google Sheets to local files")
-    .option("--languages <langs>", "Comma-separated list of languages", "en,ko")
+    .option(
+      "--languages <langs>",
+      "Comma-separated list of languages",
+      projectConfig?.languages.join(",") || "en,ko"
+    )
 ).action(async (options) => {
   try {
     console.log("📥 Starting download from Google Sheets...");
@@ -184,80 +221,124 @@ addCommonOptions(
 // 초기 설정 명령
 program
   .command("init")
-  .description("Initialize Google Sheets integration")
-  .option("-s, --spreadsheet <id>", "Google Spreadsheet ID")
+  .description("Initialize i18nexus project with config and translation files")
+  .option("-s, --spreadsheet <id>", "Google Spreadsheet ID (optional)")
   .option(
     "-c, --credentials <path>",
     "Path to credentials file",
     "./credentials.json"
   )
+  .option("-l, --locales <dir>", "Locales directory", "./locales")
+  .option("--languages <langs>", "Comma-separated list of languages", "en,ko")
   .action(async (options) => {
     try {
-      console.log("🚀 Initializing Google Sheets integration...");
+      console.log("🚀 Initializing i18nexus project...");
 
-      // credentials.json 파일 확인
-      if (!fs.existsSync(options.credentials)) {
-        console.log("\n📝 Google Service Account Setup:");
-        console.log(
-          "1. Go to Google Cloud Console (https://console.cloud.google.com/)"
-        );
-        console.log("2. Create a new project or select existing one");
-        console.log("3. Enable Google Sheets API");
-        console.log("4. Create a Service Account");
-        console.log("5. Download the JSON key file");
-        console.log(`6. Save it as '${options.credentials}'`);
-        console.log("\n📋 Spreadsheet Setup:");
-        console.log("1. Create a new Google Spreadsheet");
-        console.log("2. Share it with your service account email");
-        console.log("3. Copy the spreadsheet ID from the URL");
-        console.log("4. Use it with the -s option");
+      const languages = options.languages
+        .split(",")
+        .map((l: string) => l.trim());
 
-        if (!options.spreadsheet) {
-          console.log("\n❌ Please provide spreadsheet ID with -s option");
-          process.exit(1);
-        }
-
-        console.log("\n⚠️  Please add the credentials file and try again.");
-        process.exit(1);
-      }
-
-      if (!options.spreadsheet) {
-        console.error("❌ Spreadsheet ID is required for initialization");
-        process.exit(1);
-      }
-
-      // 설정 테스트
-      const config = {
-        credentialsPath: options.credentials,
-        spreadsheetId: options.spreadsheet,
-        sheetName: "Translations",
+      // 1. i18nexus.config.json 생성 (쉽게 로드 가능)
+      const configData = {
+        languages: languages,
+        defaultLanguage: languages[0],
+        localesDir: options.locales,
+        sourcePattern: "src/**/*.{js,jsx,ts,tsx}",
+        googleSheets: {
+          spreadsheetId: options.spreadsheet || "",
+          credentialsPath: options.credentials,
+          sheetName: "Translations",
+        },
       };
 
-      const manager = new GoogleSheetsManager(config);
-      await manager.authenticate();
+      fs.writeFileSync(
+        "i18nexus.config.json",
+        JSON.stringify(configData, null, 2)
+      );
+      console.log("✅ Created i18nexus.config.json");
 
-      const canAccess = await manager.checkSpreadsheet();
-      if (!canAccess) {
-        console.error("❌ Cannot access the spreadsheet. Please check:");
-        console.error("   1. Spreadsheet ID is correct");
-        console.error("   2. Service account has access to the spreadsheet");
-        process.exit(1);
+      // 2. locales 디렉토리 생성
+      if (!fs.existsSync(options.locales)) {
+        fs.mkdirSync(options.locales, { recursive: true });
+        console.log(`✅ Created ${options.locales} directory`);
       }
 
-      await manager.ensureWorksheet();
+      // 3. 각 언어별 번역 파일 생성
+      languages.forEach((lang: string) => {
+        const langFile = path.join(options.locales, `${lang}.json`);
+        if (!fs.existsSync(langFile)) {
+          fs.writeFileSync(langFile, JSON.stringify({}, null, 2));
+          console.log(`✅ Created ${langFile}`);
+        } else {
+          console.log(`⚠️  ${langFile} already exists, skipping...`);
+        }
+      });
 
-      // 환경 파일 생성
-      const envContent = `# Google Sheets Configuration
+      // 4. Google Sheets 연동 설정 (옵션)
+      if (options.spreadsheet) {
+        // credentials.json 파일 확인
+        if (!fs.existsSync(options.credentials)) {
+          console.log("\n📝 Google Service Account Setup:");
+          console.log(
+            "1. Go to Google Cloud Console (https://console.cloud.google.com/)"
+          );
+          console.log("2. Create a new project or select existing one");
+          console.log("3. Enable Google Sheets API");
+          console.log("4. Create a Service Account");
+          console.log("5. Download the JSON key file");
+          console.log(`6. Save it as '${options.credentials}'`);
+          console.log("\n📋 Spreadsheet Setup:");
+          console.log("1. Create a new Google Spreadsheet");
+          console.log("2. Share it with your service account email");
+          console.log("3. Copy the spreadsheet ID from the URL");
+
+          console.log(
+            "\n⚠️  Please add the credentials file and try again for Google Sheets integration."
+          );
+        } else {
+          // 설정 테스트
+          const config = {
+            credentialsPath: options.credentials,
+            spreadsheetId: options.spreadsheet,
+            sheetName: "Translations",
+          };
+
+          const manager = new GoogleSheetsManager(config);
+          await manager.authenticate();
+
+          const canAccess = await manager.checkSpreadsheet();
+          if (!canAccess) {
+            console.error("❌ Cannot access the spreadsheet. Please check:");
+            console.error("   1. Spreadsheet ID is correct");
+            console.error(
+              "   2. Service account has access to the spreadsheet"
+            );
+          } else {
+            await manager.ensureWorksheet();
+
+            // 환경 파일 생성
+            const envContent = `# Google Sheets Configuration
 GOOGLE_SPREADSHEET_ID=${options.spreadsheet}
 GOOGLE_CREDENTIALS_PATH=${options.credentials}
 `;
+            fs.writeFileSync(".env.sheets", envContent);
+            console.log("✅ Google Sheets integration configured");
+            console.log(`📋 Spreadsheet ID: ${options.spreadsheet}`);
+            console.log(`🔑 Credentials: ${options.credentials}`);
+          }
+        }
+      }
 
-      fs.writeFileSync(".env.sheets", envContent);
-
-      console.log("✅ Google Sheets integration initialized successfully!");
-      console.log(`📋 Spreadsheet ID: ${options.spreadsheet}`);
-      console.log(`🔑 Credentials: ${options.credentials}`);
-      console.log("📄 Configuration saved to .env.sheets");
+      console.log("\n✅ i18nexus project initialized successfully!");
+      console.log("\n📝 Next steps:");
+      console.log("1. Update i18nexus.config.json with your project settings");
+      console.log("2. Run 'i18n-wrapper' to wrap hardcoded strings");
+      console.log(
+        "3. Run 'i18n-extractor' to extract translation keys to en.json and ko.json"
+      );
+      if (options.spreadsheet) {
+        console.log("4. Run 'i18n-sheets upload' to sync with Google Sheets");
+      }
     } catch (error) {
       console.error("❌ Initialization failed:", error);
       process.exit(1);
@@ -269,7 +350,10 @@ program.on("--help", () => {
   console.log("");
   console.log("Examples:");
   console.log(
-    "  $ i18n-sheets init -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+    "  $ i18n-sheets init                                          # Initialize project without Google Sheets"
+  );
+  console.log(
+    "  $ i18n-sheets init -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms  # Initialize with Google Sheets"
   );
   console.log(
     "  $ i18n-sheets upload -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"

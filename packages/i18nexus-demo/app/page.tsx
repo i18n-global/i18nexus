@@ -20,7 +20,23 @@ export default function HomePage() {
           {t("Complete React i18n Toolkit")}
         </p>
         <p className="text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
-          {t("Automate your internationalization workflow with intelligent tools")}
+          {t(
+            "Automate your internationalization workflow with intelligent tools"
+          )}
+        </p>
+      </div>
+
+      {/* Quick Start CTA */}
+      <div className="text-center mb-16">
+        <Link
+          href="/getting-started"
+          className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:scale-105">
+          <span className="mr-3 text-2xl">🚀</span>
+          {t("Getting Started")}
+          <span className="ml-3">→</span>
+        </Link>
+        <p className="text-slate-400 mt-4">
+          {t("Complete step-by-step guide to setup i18nexus in your project")}
         </p>
       </div>
 
@@ -28,8 +44,7 @@ export default function HomePage() {
       <div className="grid md:grid-cols-2 gap-8 mb-20">
         <Link
           href="/provider"
-          className="group relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 hover:border-blue-500 p-8 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-1"
-        >
+          className="group relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 hover:border-blue-500 p-8 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 hover:-translate-y-1">
           <div className="absolute top-4 right-4 w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
             <span className="text-3xl">🎨</span>
           </div>
@@ -37,7 +52,9 @@ export default function HomePage() {
             {t("I18nProvider")}
           </h2>
           <p className="text-slate-400 mb-6 leading-relaxed">
-            {t("React Context provider with cookie-based language persistence and SSR support")}
+            {t(
+              "React Context provider with cookie-based language persistence and SSR support"
+            )}
           </p>
           <div className="space-y-2">
             <div className="flex items-center text-sm text-slate-300">
@@ -54,14 +71,16 @@ export default function HomePage() {
             </div>
           </div>
           <div className="mt-6 inline-flex items-center text-blue-400 font-medium group-hover:text-blue-300">
-            {t("Learn more")} <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+            {t("Learn more")}{" "}
+            <span className="ml-2 group-hover:translate-x-1 transition-transform">
+              →
+            </span>
           </div>
         </Link>
 
         <Link
           href="/cli"
-          className="group relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 hover:border-indigo-500 p-8 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-1"
-        >
+          className="group relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 hover:border-indigo-500 p-8 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-1">
           <div className="absolute top-4 right-4 w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
             <span className="text-3xl">⚡</span>
           </div>
@@ -69,7 +88,9 @@ export default function HomePage() {
             {t("CLI Tools")}
           </h2>
           <p className="text-slate-400 mb-6 leading-relaxed">
-            {t("Powerful automation tools for wrapping text and managing translations")}
+            {t(
+              "Powerful automation tools for wrapping text and managing translations"
+            )}
           </p>
           <div className="space-y-2">
             <div className="flex items-center text-sm text-slate-300">
@@ -86,7 +107,10 @@ export default function HomePage() {
             </div>
           </div>
           <div className="mt-6 inline-flex items-center text-indigo-400 font-medium group-hover:text-indigo-300">
-            {t("Learn more")} <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+            {t("Learn more")}{" "}
+            <span className="ml-2 group-hover:translate-x-1 transition-transform">
+              →
+            </span>
           </div>
         </Link>
       </div>
