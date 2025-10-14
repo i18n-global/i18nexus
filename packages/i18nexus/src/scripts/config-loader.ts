@@ -32,15 +32,18 @@ const DEFAULT_CONFIG: I18nexusConfig = {
  * 파일이 없으면 기본 설정을 반환합니다.
  */
 export function loadConfig(
-  configPath: string = "i18nexus.config.json"
+  configPath: string = "i18nexus.config.json",
+  options?: { silent?: boolean }
 ): I18nexusConfig {
   const absolutePath = pathLib.resolve(process.cwd(), configPath);
 
   if (!fs.existsSync(absolutePath)) {
-    console.log(
-      "⚠️  i18nexus.config.json not found, using default configuration"
-    );
-    console.log("💡 Run 'i18n-sheets init' to create a config file");
+    if (!options?.silent) {
+      console.log(
+        "⚠️  i18nexus.config.json not found, using default configuration"
+      );
+      console.log("💡 Run 'i18n-sheets init' to create a config file");
+    }
     return DEFAULT_CONFIG;
   }
 
@@ -59,10 +62,22 @@ export function loadConfig(
       },
     };
   } catch (error) {
-    console.warn(
-      `⚠️  Failed to load ${configPath}, using default configuration:`,
-      error
-    );
+    if (!options?.silent) {
+      console.warn(
+        `⚠️  Failed to load ${configPath}, using default configuration:`,
+        error
+      );
+    }
     return DEFAULT_CONFIG;
   }
+}
+
+/**
+ * i18nexus.config.json 파일을 조용히 로드합니다 (로그 출력 없음).
+ * 서버 환경에서 사용하기 적합합니다.
+ */
+export function loadConfigSilently(
+  configPath: string = "i18nexus.config.json"
+): I18nexusConfig {
+  return loadConfig(configPath, { silent: true });
 }

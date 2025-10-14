@@ -130,6 +130,23 @@ addCommonOptions(
     await manager.authenticate();
     await manager.saveTranslationsToLocal(options.locales, languages);
 
+    // index.ts 생성
+    const indexPath = path.join(options.locales, "index.ts");
+    const imports = languages
+      .map((lang: string) => `import ${lang} from "./${lang}.json";`)
+      .join("\n");
+    const exportObj = languages
+      .map((lang: string) => `  ${lang}: ${lang},`)
+      .join("\n");
+    const indexContent = `${imports}
+
+export const translations = {
+${exportObj}
+};
+`;
+    fs.writeFileSync(indexPath, indexContent);
+    console.log(`📝 Generated ${indexPath}`);
+
     console.log("✅ Download completed successfully");
   } catch (error) {
     console.error("❌ Download failed:", error);
@@ -274,7 +291,28 @@ program
         }
       });
 
-      // 4. Google Sheets 연동 설정 (옵션)
+      // 4. index.ts 파일 생성
+      const indexPath = path.join(options.locales, "index.ts");
+      if (!fs.existsSync(indexPath)) {
+        const imports = languages
+          .map((lang: string) => `import ${lang} from "./${lang}.json";`)
+          .join("\n");
+        const exportObj = languages
+          .map((lang: string) => `  ${lang}: ${lang},`)
+          .join("\n");
+        const indexContent = `${imports}
+
+export const translations = {
+${exportObj}
+};
+`;
+        fs.writeFileSync(indexPath, indexContent);
+        console.log(`✅ Created ${indexPath}`);
+      } else {
+        console.log(`⚠️  ${indexPath} already exists, skipping...`);
+      }
+
+      // 5. Google Sheets 연동 설정 (옵션)
       if (options.spreadsheet) {
         // credentials.json 파일 확인
         if (!fs.existsSync(options.credentials)) {

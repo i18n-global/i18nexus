@@ -4,6 +4,10 @@ export type { I18nProviderProps } from "./components/I18nProvider";
 
 // Hooks
 export { useTranslation, useLanguageSwitcher } from "./hooks/useTranslation";
+export type {
+  UseTranslationReturn,
+  UseLanguageSwitcherReturn,
+} from "./hooks/useTranslation";
 
 // Utils
 export {

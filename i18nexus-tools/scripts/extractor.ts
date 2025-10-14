@@ -218,6 +218,34 @@ export class TranslationExtractor {
     return value;
   }
 
+  private generateIndexFile(): void {
+    const indexPath = pathLib.join(this.config.outputDir, "index.ts");
+
+    // Import 문 생성
+    const imports = this.config.languages
+      .map((lang) => `import ${lang} from "./${lang}.json";`)
+      .join("\n");
+
+    // Export 객체 생성
+    const exportObj = this.config.languages
+      .map((lang) => `  ${lang}: ${lang},`)
+      .join("\n");
+
+    const content = `${imports}
+
+export const translations = {
+${exportObj}
+};
+`;
+
+    if (!this.config.dryRun) {
+      fs.writeFileSync(indexPath, content, "utf-8");
+      console.log(`📝 Generated index file: ${indexPath}`);
+    } else {
+      console.log(`📄 Dry run - index file would be written to: ${indexPath}`);
+    }
+  }
+
   private writeOutputFile(data: any): void {
     // 디렉토리가 없으면 생성
     if (!fs.existsSync(this.config.outputDir)) {
@@ -288,6 +316,9 @@ export class TranslationExtractor {
           console.log(`📝 Extracted translations written to: ${langFile}`);
         }
       });
+
+      // index.ts 파일 생성
+      this.generateIndexFile();
     }
   }
 

@@ -12,6 +12,28 @@ export interface DownloadConfig {
   languages?: string[];
 }
 
+function generateIndexFile(localesDir: string, languages: string[]): void {
+  const indexPath = path.join(localesDir, "index.ts");
+
+  // Import 문 생성
+  const imports = languages
+    .map((lang) => `import ${lang} from "./${lang}.json";`)
+    .join("\n");
+
+  // Export 객체 생성
+  const exportObj = languages.map((lang) => `  ${lang}: ${lang},`).join("\n");
+
+  const content = `${imports}
+
+export const translations = {
+${exportObj}
+};
+`;
+
+  fs.writeFileSync(indexPath, content, "utf-8");
+  console.log(`📝 Generated index file: ${indexPath}`);
+}
+
 const DEFAULT_CONFIG: Required<DownloadConfig> = {
   credentialsPath: "./credentials.json",
   spreadsheetId: "",
@@ -56,6 +78,9 @@ export async function downloadTranslations(
       finalConfig.localesDir,
       finalConfig.languages
     );
+
+    // index.ts 생성
+    generateIndexFile(finalConfig.localesDir, finalConfig.languages);
 
     console.log("✅ Translation download completed successfully");
   } catch (error) {

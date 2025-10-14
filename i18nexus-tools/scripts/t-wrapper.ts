@@ -93,7 +93,7 @@ export class TranslationWrapper {
       },
       JSXText: (subPath) => {
         const text = subPath.node.value.trim();
-        
+
         // 빈 텍스트나 공백만 있는 경우 스킵
         if (!text) {
           return;
@@ -102,12 +102,12 @@ export class TranslationWrapper {
         // 한국어가 포함된 텍스트만 처리
         if (/[가-힣]/.test(text)) {
           wasModified = true;
-          
+
           // t() 함수 호출로 감싸기
           const replacement = t.jsxExpressionContainer(
             t.callExpression(t.identifier("t"), [t.stringLiteral(text)])
           );
-          
+
           subPath.replaceWith(replacement);
         }
       },
