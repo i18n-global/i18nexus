@@ -43,7 +43,7 @@ const DEFAULT_CONFIG: Required<DownloadConfig> = {
 };
 
 export async function downloadTranslations(
-  config: Partial<DownloadConfig> = {}
+  config: Partial<DownloadConfig> = {},
 ) {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
@@ -58,7 +58,7 @@ export async function downloadTranslations(
 
     if (!fs.existsSync(finalConfig.credentialsPath)) {
       console.error(
-        `❌ Credentials file not found: ${finalConfig.credentialsPath}`
+        `❌ Credentials file not found: ${finalConfig.credentialsPath}`,
       );
       process.exit(1);
     }
@@ -76,7 +76,7 @@ export async function downloadTranslations(
     // 번역 파일 다운로드
     await sheetsManager.saveTranslationsToLocal(
       finalConfig.localesDir,
-      finalConfig.languages
+      finalConfig.languages,
     );
 
     // index.ts 생성

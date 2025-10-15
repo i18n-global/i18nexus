@@ -4,15 +4,24 @@ import { useI18nContext } from "../components/I18nProvider";
 import { LanguageConfig } from "../utils/languageManager";
 
 /**
+ * Variables for string interpolation
+ */
+export type TranslationVariables = Record<string, string | number>;
+
+/**
  * Return type for useTranslation hook
  */
 export interface UseTranslationReturn {
   /**
    * Translation function
    * @param key - Translation key to look up
+   * @param variables - Optional object with variables for string interpolation
    * @returns Translated string or the key if translation not found
+   * @example
+   * t("Hello {{name}}", { name: "World" }) // Returns "Hello World"
+   * t("{{fileName}}은(는) 이미 추가된 파일입니다.", { fileName: "test.txt" })
    */
-  t: (key: string) => string;
+  t: (key: string, variables?: TranslationVariables) => string;
   /**
    * Current language code (e.g., 'en', 'ko')
    */
@@ -24,15 +33,36 @@ export interface UseTranslationReturn {
 }
 
 /**
+ * Replace variables in a translation string
+ * @param text - Text with {{variable}} placeholders
+ * @param variables - Object with variable values
+ * @returns Text with variables replaced
+ */
+const interpolate = (
+  text: string,
+  variables?: TranslationVariables
+): string => {
+  if (!variables) {
+    return text;
+  }
+
+  return text.replace(/\{\{(\w+)\}\}/g, (match, variableName) => {
+    const value = variables[variableName];
+    return value !== undefined ? String(value) : match;
+  });
+};
+
+/**
  * Hook to access translation function and current language
  */
 export const useTranslation = (): UseTranslationReturn => {
   const { currentLanguage, isLoading, translations } = useI18nContext();
 
   // i18nexus 자체 번역 시스템 사용
-  const translate = (key: string) => {
+  const translate = (key: string, variables?: TranslationVariables) => {
     const currentTranslations = translations[currentLanguage] || {};
-    return currentTranslations[key] || key;
+    const translatedText = currentTranslations[key] || key;
+    return interpolate(translatedText, variables);
   };
 
   return {

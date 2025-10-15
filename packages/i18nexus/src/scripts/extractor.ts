@@ -163,6 +163,15 @@ export class TranslationExtractor {
     return undefined;
   }
 
+  /**
+   * Remove variable placeholders from a string
+   * @param text - Text with {{variable}} placeholders
+   * @returns Text with {{variable}} replaced with empty string
+   */
+  private removeVariablePlaceholders(text: string): string {
+    return text.replace(/\{\{\w+\}\}/g, "");
+  }
+
   private generateOutputData(): any {
     const keys = Array.from(this.extractedKeys.values());
 
@@ -179,7 +188,9 @@ export class TranslationExtractor {
 
     keys.forEach(({ key, defaultValue }) => {
       // key를 그대로 사용하고, defaultValue가 있으면 사용, 없으면 key를 기본값으로
-      result[key] = defaultValue || key;
+      const value = defaultValue || key;
+      // {{variable}} 패턴이 있으면 빈 값으로 치환
+      result[key] = this.removeVariablePlaceholders(value);
     });
 
     return result;
@@ -193,11 +204,13 @@ export class TranslationExtractor {
       // CSV 라인: key, 빈값(영어), defaultValue 또는 key(한국어)
       const englishValue = "";
       const koreanValue = defaultValue || key;
+      // {{variable}} 패턴이 있으면 빈 값으로 치환
+      const koreanValueCleaned = this.removeVariablePlaceholders(koreanValue);
 
       // CSV 이스케이프 처리
       const escapedKey = this.escapeCsvValue(key);
       const escapedEnglish = this.escapeCsvValue(englishValue);
-      const escapedKorean = this.escapeCsvValue(koreanValue);
+      const escapedKorean = this.escapeCsvValue(koreanValueCleaned);
 
       csvLines.push(`${escapedKey},${escapedEnglish},${escapedKorean}`);
     });
@@ -290,8 +303,9 @@ ${exportObj}
 
         Object.keys(data).forEach((key) => {
           if (lang === "ko") {
-            // 한국어는 키를 그대로 또는 defaultValue 사용
-            mergedTranslations[key] = data[key] || key;
+            // 한국어는 키를 그대로 또는 defaultValue 사용 ({{variable}} 패턴은 이미 제거됨)
+            mergedTranslations[key] =
+              data[key] || this.removeVariablePlaceholders(key);
           } else if (lang === "en") {
             // 영어는 기존 번역이 있으면 유지, 없으면 빈 문자열
             if (!mergedTranslations[key]) {

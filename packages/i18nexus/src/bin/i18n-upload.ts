@@ -32,14 +32,14 @@ export async function uploadTranslations(config: Partial<UploadConfig> = {}) {
 
     if (!fs.existsSync(finalConfig.credentialsPath)) {
       console.error(
-        `❌ Credentials file not found: ${finalConfig.credentialsPath}`
+        `❌ Credentials file not found: ${finalConfig.credentialsPath}`,
       );
       process.exit(1);
     }
 
     if (!fs.existsSync(finalConfig.localesDir)) {
       console.error(
-        `❌ Locales directory not found: ${finalConfig.localesDir}`
+        `❌ Locales directory not found: ${finalConfig.localesDir}`,
       );
       process.exit(1);
     }
