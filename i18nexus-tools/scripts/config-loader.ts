@@ -8,6 +8,7 @@ export interface I18nexusConfig {
   defaultLanguage: string;
   localesDir: string;
   sourcePattern: string;
+  translationImportSource: string;
   googleSheets?: {
     spreadsheetId: string;
     credentialsPath: string;
@@ -20,6 +21,7 @@ const DEFAULT_CONFIG: I18nexusConfig = {
   defaultLanguage: "ko",
   localesDir: "./locales",
   sourcePattern: "src/**/*.{js,jsx,ts,tsx}",
+  translationImportSource: "i18nexus",
   googleSheets: {
     spreadsheetId: "",
     credentialsPath: "./credentials.json",

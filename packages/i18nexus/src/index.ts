@@ -31,6 +31,13 @@ export type {
   LanguageManagerOptions,
 } from "./utils/languageManager";
 
+// Type utilities
+export { defineConfig } from "./utils/types";
+export type { ExtractLanguages } from "./utils/types";
+
+// Config
+export type { I18nexusConfig } from "./scripts/config-loader";
+
 // Note: CLI tools are available separately:
 // - npx i18n-wrapper (wrap hardcoded strings with t() functions)
 // - npx i18n-extractor (extract translation keys to JSON/CSV)

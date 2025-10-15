@@ -6,9 +6,10 @@ import { loadConfig } from "../scripts/config-loader.js";
 const args = process.argv.slice(2);
 
 // i18nexus.config.js에서 설정 로드
-const projectConfig = loadConfig();
+const projectConfig = await loadConfig();
 const config: Partial<ScriptConfig> = {
   sourcePattern: projectConfig.sourcePattern,
+  translationImportSource: projectConfig.translationImportSource,
 };
 
 for (let i = 0; i < args.length; i++) {

@@ -12,10 +12,10 @@ import * as path from "path";
 const program = new Command();
 
 // i18nexus.config.js에서 설정 로드 (init 명령 제외)
-let projectConfig: ReturnType<typeof loadConfig> | null = null;
+let projectConfig: Awaited<ReturnType<typeof loadConfig>> | null = null;
 try {
   if (!process.argv.includes("init")) {
-    projectConfig = loadConfig();
+    projectConfig = await loadConfig();
   }
 } catch (error) {
   // init 명령이 아닐 때만 경고
@@ -247,6 +247,10 @@ program
   )
   .option("-l, --locales <dir>", "Locales directory", "./locales")
   .option("--languages <langs>", "Comma-separated list of languages", "en,ko")
+  .option(
+    "--typescript, --ts",
+    "Generate TypeScript config file (.ts) instead of JSON"
+  )
   .action(async (options) => {
     try {
       console.log("🚀 Initializing i18nexus project...");
@@ -255,24 +259,63 @@ program
         .split(",")
         .map((l: string) => l.trim());
 
-      // 1. i18nexus.config.json 생성 (쉽게 로드 가능)
-      const configData = {
-        languages: languages,
-        defaultLanguage: languages[0],
-        localesDir: options.locales,
-        sourcePattern: "src/**/*.{js,jsx,ts,tsx}",
-        googleSheets: {
-          spreadsheetId: options.spreadsheet || "",
-          credentialsPath: options.credentials,
-          sheetName: "Translations",
-        },
-      };
+      // 1. i18nexus.config 파일 생성 (.ts 또는 .json)
+      if (options.typescript || options.ts) {
+        // TypeScript config 파일 생성
+        const languagesArray = languages
+          .map((l: string) => `"${l}"`)
+          .join(", ");
+        const tsContent = `import { defineConfig } from "i18nexus";
 
-      fs.writeFileSync(
-        "i18nexus.config.json",
-        JSON.stringify(configData, null, 2)
-      );
-      console.log("✅ Created i18nexus.config.json");
+export const config = defineConfig({
+  languages: [${languagesArray}] as const,
+  defaultLanguage: "${languages[0]}",
+  localesDir: "${options.locales}",
+  sourcePattern: "src/**/*.{ts,tsx,js,jsx}",
+  translationImportSource: "i18nexus",${
+    options.spreadsheet
+      ? `
+  googleSheets: {
+    spreadsheetId: "${options.spreadsheet}",
+    credentialsPath: "${options.credentials}",
+    sheetName: "Translations",
+  },`
+      : ""
+  }
+});
+
+// Export the language union type for type safety
+export type AppLanguages = typeof config.languages[number];
+`;
+        fs.writeFileSync("i18nexus.config.ts", tsContent);
+        console.log("✅ Created i18nexus.config.ts");
+        console.log(
+          "💡 Use AppLanguages type for type-safe language switching:"
+        );
+        console.log(
+          "   const { changeLanguage } = useLanguageSwitcher<AppLanguages>();"
+        );
+      } else {
+        // JSON config 파일 생성
+        const configData = {
+          languages: languages,
+          defaultLanguage: languages[0],
+          localesDir: options.locales,
+          sourcePattern: "src/**/*.{js,jsx,ts,tsx}",
+          translationImportSource: "i18nexus",
+          googleSheets: {
+            spreadsheetId: options.spreadsheet || "",
+            credentialsPath: options.credentials,
+            sheetName: "Translations",
+          },
+        };
+
+        fs.writeFileSync(
+          "i18nexus.config.json",
+          JSON.stringify(configData, null, 2)
+        );
+        console.log("✅ Created i18nexus.config.json");
+      }
 
       // 2. locales 디렉토리 생성
       if (!fs.existsSync(options.locales)) {

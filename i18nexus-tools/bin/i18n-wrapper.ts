@@ -9,6 +9,7 @@ const args = process.argv.slice(2);
 const projectConfig = loadConfig();
 const config: Partial<ScriptConfig> = {
   sourcePattern: projectConfig.sourcePattern,
+  translationImportSource: projectConfig.translationImportSource,
 };
 
 for (let i = 0; i < args.length; i++) {

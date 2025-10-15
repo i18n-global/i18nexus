@@ -22,7 +22,7 @@ export type TranslationStyles = Record<string, VariableStyle>;
 /**
  * Return type for useTranslation hook
  */
-export interface UseTranslationReturn {
+export interface UseTranslationReturn<TLanguage extends string = string> {
   /**
    * Translation function
    * @param key - Translation key to look up
@@ -31,24 +31,24 @@ export interface UseTranslationReturn {
    * @returns Translated string or React elements if styles are provided
    * @example
    * // Simple string interpolation
-   * t("Hello {{name}}", { name: "World" }) 
+   * t("Hello {{name}}", { name: "World" })
    * // Returns: "Hello World"
-   * 
+   *
    * // With styles
    * t("개수 : {{count}} 입니다", { count: 5 }, { count: { color: 'red', fontWeight: 'bold' } })
    * // Returns: <>개수 : <span style={{...}}>5</span> 입니다</>
-   * 
+   *
    * t("{{fileName}}은(는) 이미 추가된 파일입니다.", { fileName: "test.txt" }, { fileName: { color: 'blue' } })
    */
   t: (
     key: string,
     variables?: TranslationVariables,
-    styles?: TranslationStyles,
+    styles?: TranslationStyles
   ) => string | React.ReactElement;
   /**
    * Current language code (e.g., 'en', 'ko')
    */
-  currentLanguage: string;
+  currentLanguage: TLanguage;
   /**
    * Whether translations are ready to use
    */
@@ -63,7 +63,7 @@ export interface UseTranslationReturn {
  */
 const interpolate = (
   text: string,
-  variables?: TranslationVariables,
+  variables?: TranslationVariables
 ): string => {
   if (!variables) {
     return text;
@@ -85,7 +85,7 @@ const interpolate = (
 const interpolateWithStyles = (
   text: string,
   variables: TranslationVariables,
-  styles: TranslationStyles,
+  styles: TranslationStyles
 ): React.ReactElement => {
   // Split text by variable placeholders
   const parts: (string | React.ReactElement)[] = [];
@@ -111,8 +111,8 @@ const interpolateWithStyles = (
           React.createElement(
             "span",
             { key: `var-${key++}`, style: style },
-            String(value),
-          ),
+            String(value)
+          )
         );
       } else {
         // Just add the value as string
@@ -137,14 +137,17 @@ const interpolateWithStyles = (
 /**
  * Hook to access translation function and current language
  */
-export const useTranslation = (): UseTranslationReturn => {
-  const { currentLanguage, isLoading, translations } = useI18nContext();
+export const useTranslation = <
+  TLanguage extends string = string,
+>(): UseTranslationReturn<TLanguage> => {
+  const { currentLanguage, isLoading, translations } =
+    useI18nContext<TLanguage>();
 
   // i18nexus 자체 번역 시스템 사용
   const translate = (
     key: string,
     variables?: TranslationVariables,
-    styles?: TranslationStyles,
+    styles?: TranslationStyles
   ) => {
     const currentTranslations = translations[currentLanguage] || {};
     const translatedText = currentTranslations[key] || key;
@@ -168,11 +171,11 @@ export const useTranslation = (): UseTranslationReturn => {
 /**
  * Return type for useLanguageSwitcher hook
  */
-export interface UseLanguageSwitcherReturn {
+export interface UseLanguageSwitcherReturn<TLanguage extends string = string> {
   /**
    * Current language code (e.g., 'en', 'ko')
    */
-  currentLanguage: string;
+  currentLanguage: TLanguage;
   /**
    * List of available language configurations
    */
@@ -182,13 +185,13 @@ export interface UseLanguageSwitcherReturn {
    * @param lang - Language code to switch to
    * @returns Promise that resolves when language is changed
    */
-  changeLanguage: (lang: string) => Promise<void>;
+  changeLanguage: (lang: TLanguage) => Promise<void>;
   /**
    * Alias for changeLanguage - Switch to a specific language
    * @param lang - Language code to switch to
    * @returns Promise that resolves when language is changed
    */
-  switchLng: (lang: string) => Promise<void>;
+  switchLng: (lang: TLanguage) => Promise<void>;
   /**
    * Switch to the next available language in the list
    */
@@ -201,7 +204,7 @@ export interface UseLanguageSwitcherReturn {
    * Get language configuration for a specific language code
    * @param code - Language code (defaults to current language)
    */
-  getLanguageConfig: (code?: string) => LanguageConfig | undefined;
+  getLanguageConfig: (code?: TLanguage) => LanguageConfig | undefined;
   /**
    * Detect the user's browser language
    * @returns Browser language code or null if not detected
@@ -220,20 +223,22 @@ export interface UseLanguageSwitcherReturn {
 /**
  * Hook to access language switching functionality
  */
-export const useLanguageSwitcher = (): UseLanguageSwitcherReturn => {
+export const useLanguageSwitcher = <
+  TLanguage extends string = string,
+>(): UseLanguageSwitcherReturn<TLanguage> => {
   const {
     currentLanguage,
     changeLanguage,
     availableLanguages,
     languageManager,
     isLoading,
-  } = useI18nContext();
+  } = useI18nContext<TLanguage>();
 
   const switchToNextLanguage = async () => {
     const languageCodes = availableLanguages.map((lang) => lang.code);
     const currentIndex = languageCodes.indexOf(currentLanguage);
     const nextIndex = (currentIndex + 1) % languageCodes.length;
-    const nextLanguage = languageCodes[nextIndex];
+    const nextLanguage = languageCodes[nextIndex] as TLanguage;
     await changeLanguage(nextLanguage);
   };
 
@@ -242,12 +247,14 @@ export const useLanguageSwitcher = (): UseLanguageSwitcherReturn => {
     const currentIndex = languageCodes.indexOf(currentLanguage);
     const prevIndex =
       currentIndex === 0 ? languageCodes.length - 1 : currentIndex - 1;
-    const prevLanguage = languageCodes[prevIndex];
+    const prevLanguage = languageCodes[prevIndex] as TLanguage;
     await changeLanguage(prevLanguage);
   };
 
-  const getLanguageConfig = (code?: string) => {
-    return languageManager.getLanguageConfig(code || currentLanguage);
+  const getLanguageConfig = (code?: TLanguage) => {
+    return languageManager.getLanguageConfig(
+      (code || currentLanguage) as string
+    );
   };
 
   const detectBrowserLanguage = () => {

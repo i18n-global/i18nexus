@@ -8,9 +8,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-**🌍 Complete React i18n toolkit with intelligent automation and Server Components support**
+**🌍 Type-safe React i18n toolkit with intelligent automation and Server Components support**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Server Components](#-server-components) • [CLI Tools](#-cli-tools) • [API](#-api)
+[Features](#-features) • [Quick Start](#-quick-start) • [Type Safety](#-type-safe-languages) • [Server Components](#-server-components) • [CLI Tools](#-cli-tools)
 
 </div>
 
@@ -18,20 +18,48 @@
 
 ## 🚀 What is i18nexus?
 
-i18nexus is a comprehensive React internationalization toolkit that **automates the entire i18n workflow**. With full Next.js App Router support (including Server Components), automatic string wrapping, and seamless Google Sheets integration, i18nexus eliminates the tedious manual work of internationalization.
+i18nexus is a comprehensive React internationalization toolkit that **automates the entire i18n workflow** with **full type safety**. With TypeScript config support, automatic string wrapping, and seamless Google Sheets integration, i18nexus eliminates tedious manual work while providing IDE autocomplete for language codes.
 
 ### ✨ Why i18nexus?
 
+- **🎯 Type-Safe Languages**: TypeScript config with autocomplete for language codes
 - **🤖 Zero Manual Work**: Automatically detect and wrap hardcoded strings
 - **🖥️ Server Components**: Full Next.js App Router support with zero hydration issues
-- **🔄 Seamless Workflow**: Init → Wrap → Extract → Translate in minutes
+- **🔄 3-Command Setup**: `init` → `wrapper` → `extractor` - Done!
 - **🍪 Smart Persistence**: Cookie-based language management with SSR support
 - **📊 Team Collaboration**: Direct Google Sheets integration for translators
-- **🎯 Developer Friendly**: CLI tools that integrate into any workflow
 
 ---
 
 ## 🌟 Features
+
+### 🎯 Type-Safe Language Management (NEW!)
+
+With TypeScript config support, get **IDE autocomplete** and **compile-time validation** for language codes:
+
+```typescript
+// i18nexus.config.ts
+import { defineConfig } from "i18nexus";
+
+export const config = defineConfig({
+  languages: ["en", "ko", "ja"] as const, // Type inference!
+  defaultLanguage: "ko",
+  localesDir: "./locales",
+  sourcePattern: "app/**/*.{ts,tsx}",
+  translationImportSource: "i18nexus",
+});
+
+export type AppLanguages = (typeof config.languages)[number];
+```
+
+```typescript
+// In your component
+const { changeLanguage } = useLanguageSwitcher<AppLanguages>();
+
+changeLanguage("en"); // ✅ Autocomplete!
+changeLanguage("ko"); // ✅ Type-safe!
+changeLanguage("fr"); // ❌ Compile error!
+```
 
 ### 🖥️ Server & Client Components Support
 
@@ -52,7 +80,7 @@ i18nexus is a comprehensive React internationalization toolkit that **automates 
 - **Comprehensive Scanning**: Extracts all `t()` wrapped keys from your codebase
 - **Smart Merging**: Preserves existing translations, only adds new keys
 - **Multi-language Support**: Generate files for all your languages
-- **Config-based**: Use `i18nexus.config.json` for project settings
+- **Config-based**: Use `i18nexus.config.ts` or `.json` for project settings
 
 ### 📊 Google Sheets Integration
 
@@ -71,35 +99,53 @@ i18nexus is a comprehensive React internationalization toolkit that **automates 
 npm install i18nexus
 ```
 
-### 1. Initialize Project
+### 1. Initialize Project (with TypeScript Config)
+
+```bash
+npx i18n-sheets init --typescript
+```
+
+This creates:
+- `i18nexus.config.ts` - TypeScript configuration with type inference
+- `locales/` directory - Translation files (ko.json, en.json)
+
+Or use JSON config (without type safety):
 
 ```bash
 npx i18n-sheets init
 ```
 
-This creates:
-
-- `i18nexus.config.json` - Project configuration
-- `locales/` directory - Translation files (ko.json, en.json)
-
 ### 2. Setup I18nProvider (Next.js App Router)
 
 ```tsx
 // app/layout.tsx
-import { headers } from "next/headers";
 import { I18nProvider } from "i18nexus";
-import { getServerLanguage } from "i18nexus/server";
-import { translations } from "@/lib/i18n";
+import { cookies } from "next/headers";
+import { config, AppLanguages } from "@/i18nexus.config";
+import enTranslations from "@/locales/en.json";
+import koTranslations from "@/locales/ko.json";
 
 export default async function RootLayout({ children }) {
-  // Read language from cookies on the server
-  const headersList = await headers();
-  const language = getServerLanguage(headersList);
+  const cookieStore = await cookies();
+  const language = cookieStore.get("i18n-language")?.value || config.defaultLanguage;
 
   return (
     <html lang={language}>
       <body>
-        <I18nProvider initialLanguage={language} translations={translations}>
+        <I18nProvider<AppLanguages>
+          initialLanguage={language as AppLanguages}
+          languageManagerOptions={{
+            defaultLanguage: config.defaultLanguage,
+            availableLanguages: [
+              { code: "ko", name: "한국어", flag: "🇰🇷" },
+              { code: "en", name: "English", flag: "🇺🇸" },
+            ],
+          }}
+          translations={{
+            ko: koTranslations,
+            en: enTranslations,
+          }}
+        >
           {children}
         </I18nProvider>
       </body>
@@ -108,44 +154,27 @@ export default async function RootLayout({ children }) {
 }
 ```
 
-```tsx
-// lib/i18n.ts
-import en from "../locales/en.json";
-import ko from "../locales/ko.json";
-
-export const translations = {
-  en,
-  ko,
-};
-```
-
 ### 3. Wrap Korean Text
 
 ```bash
 npx i18n-wrapper
 ```
 
-**⚠️ Important: Check for Server Components**
+**What it does:**
+- ✅ Detects Korean text in your components
+- ✅ Wraps with `t()` functions
+- ✅ Adds `useTranslation` imports
+- ✅ Adds hooks to components
 
-After running `i18n-wrapper`, some files may have errors because:
-
-1. If the file is a Server Component (no `'use client'`), you need to use server utilities
-2. Check the error and decide whether to:
-   - Add `'use client'` directive
-   - Use `createServerTranslation()` for Server Components
+**⚠️ Important**: Check for Server Components after running this. Add `'use client'` directive or use server utilities as needed.
 
 ### 4. Extract Translation Keys
 
 ```bash
-# For Next.js App Router
-npx i18n-extractor -p "app/**/*.tsx"
-
-# For src/ directory
-npx i18n-extractor -p "src/**/*.tsx"
+npx i18n-extractor
 ```
 
 This will create/update:
-
 - `locales/ko.json` - Korean translations (auto-filled)
 - `locales/en.json` - English translations (needs manual translation)
 
@@ -160,11 +189,96 @@ Open `locales/en.json` and add English translations:
 }
 ```
 
+**Done!** 🎉
+
+---
+
+## 🎯 Type-Safe Languages
+
+### Why Type Safety?
+
+With TypeScript config, you get:
+- ✅ **Autocomplete** in IDE for language codes
+- ✅ **Compile-time errors** for invalid languages
+- ✅ **Refactoring support** when adding/removing languages
+- ✅ **Self-documenting code** with explicit types
+
+### Setup
+
+1. **Create TypeScript config:**
+
+```bash
+npx i18n-sheets init --typescript
+```
+
+2. **Use typed hooks:**
+
+```typescript
+import { useLanguageSwitcher } from "i18nexus";
+import { AppLanguages } from "@/i18nexus.config";
+
+function LanguageSwitcher() {
+  const { changeLanguage } = useLanguageSwitcher<AppLanguages>();
+  
+  // IDE will autocomplete: "en" | "ko" | "ja"
+  return (
+    <div>
+      <button onClick={() => changeLanguage("en")}>English</button>
+      <button onClick={() => changeLanguage("ko")}>한국어</button>
+    </div>
+  );
+}
+```
+
+3. **Customize import source:**
+
+In `i18nexus.config.ts`:
+
+```typescript
+export const config = defineConfig({
+  // ...
+  translationImportSource: "@/lib/i18n", // Custom import path
+});
+```
+
+Then `i18n-wrapper` will use this import:
+
+```typescript
+import { useTranslation } from "@/lib/i18n"; // Your custom path!
+```
+
+### Migration from JSON
+
+Already have `i18nexus.config.json`? Easy migration:
+
+```typescript
+// Before: i18nexus.config.json
+{
+  "languages": ["en", "ko"],
+  "defaultLanguage": "en"
+}
+
+// After: i18nexus.config.ts
+import { defineConfig } from "i18nexus";
+
+export const config = defineConfig({
+  languages: ["en", "ko"] as const, // Add 'as const'
+  defaultLanguage: "en",
+  localesDir: "./locales",
+  sourcePattern: "app/**/*.{ts,tsx}",
+  translationImportSource: "i18nexus",
+});
+
+export type AppLanguages = (typeof config.languages)[number];
+```
+
+See [TYPED_CONFIG.md](./TYPED_CONFIG.md) for detailed guide.
+
 ---
 
 ## 🖥️ Server Components
 
-i18nexus provides full support for Next.js Server Components with dedicated utilities.
+i18nexus provides full support for Next.js Server Components.
 
 ### Why Use Server Components?
 
@@ -177,14 +291,16 @@ i18nexus provides full support for Next.js Server Components with dedicated util
 
 ```tsx
 // app/page.tsx (Server Component - no "use client")
-import { headers } from "next/headers";
-import { getServerLanguage, createServerTranslation } from "i18nexus/server";
+import { cookies } from "next/headers";
+import { createServerI18n } from "i18nexus/server";
 import { translations } from "@/lib/i18n";
 
 export default async function Page() {
-  const headersList = await headers();
-  const language = getServerLanguage(headersList);
-  const t = createServerTranslation(language, translations);
+  const cookieStore = await cookies();
+  const { language, t } = await createServerI18n({
+    cookieStore,
+    translations,
+  });
 
   return (
     <div>
@@ -202,22 +318,22 @@ export default async function Page() {
 "use client";
 
 import { useTranslation, useLanguageSwitcher } from "i18nexus";
+import { AppLanguages } from "@/i18nexus.config";
 
 export default function LanguageSwitcher() {
-  const { t } = useTranslation();
+  const { t } = useTranslation<AppLanguages>();
   const { currentLanguage, changeLanguage, availableLanguages } =
-    useLanguageSwitcher();
+    useLanguageSwitcher<AppLanguages>();
 
   return (
     <div>
-      <p>
-        {t("Current Language")}: {currentLanguage}
-      </p>
+      <p>{t("Current Language")}: {currentLanguage}</p>
       {availableLanguages.map((lang) => (
         <button
           key={lang.code}
           onClick={() => changeLanguage(lang.code)}
-          className={currentLanguage === lang.code ? "active" : ""}>
+          className={currentLanguage === lang.code ? "active" : ""}
+        >
           {lang.flag} {lang.name}
         </button>
       ))}
@@ -234,7 +350,7 @@ export default function LanguageSwitcher() {
 | Performance        | ✅ Faster                   | ⚠️ Slower          |
 | Language Switching | ❌ Requires reload          | ✅ Dynamic         |
 | Interactivity      | ❌ Static                   | ✅ Full            |
-| Usage              | `createServerTranslation()` | `useTranslation()` |
+| Usage              | `createServerI18n()`        | `useTranslation()` |
 | Directive          | None                        | `"use client"`     |
 
 ---
@@ -243,87 +359,77 @@ export default function LanguageSwitcher() {
 
 ### npx i18n-sheets init
 
-Initialize i18nexus project with configuration and translation files.
+Initialize i18nexus project.
 
 ```bash
+# With TypeScript config (recommended)
+npx i18n-sheets init --typescript
+
+# With JSON config
 npx i18n-sheets init
 ```
 
-Creates:
-
-- `i18nexus.config.json`
-- `locales/ko.json`
-- `locales/en.json`
-
 ### npx i18n-wrapper
 
-Automatically wrap hardcoded Korean strings with `t()` functions.
+Automatically wrap hardcoded strings.
 
 ```bash
-# Basic usage
+# Basic usage (uses config)
 npx i18n-wrapper
 
 # Custom pattern
 npx i18n-wrapper -p "app/**/*.tsx"
+
+# Preview changes
+npx i18n-wrapper --dry-run
 ```
 
-**What it does:**
-
-- Detects Korean text in JSX
-- Wraps with `t()`
-- Adds imports if needed
+**Configuration**: Set `translationImportSource` in your config to customize imports.
 
 ### npx i18n-extractor
 
-Extract translation keys from your code.
+Extract translation keys.
 
 ```bash
-# For App Router
+# Basic usage (uses config)
+npx i18n-extractor
+
+# Custom pattern
 npx i18n-extractor -p "app/**/*.tsx"
 
-# For src directory
-npx i18n-extractor -p "src/**/*.tsx"
+# Preview
+npx i18n-extractor --dry-run
 ```
 
-**Features:**
+### npx i18n-sheets upload/download
 
-- Smart merging (preserves existing translations)
-- Adds only new keys
-- Sorts keys alphabetically
-
-### npx i18n-sheets upload
-
-Upload translations to Google Sheets.
+Sync with Google Sheets.
 
 ```bash
+# Upload
 npx i18n-sheets upload -s YOUR_SPREADSHEET_ID
-```
 
-### npx i18n-sheets download
-
-Download translations from Google Sheets.
-
-```bash
+# Download
 npx i18n-sheets download -s YOUR_SPREADSHEET_ID
 ```
 
 ### Complete Workflow
 
 ```bash
-# 1. Initialize project
-npx i18n-sheets init
+# 1. Initialize with TypeScript config
+npx i18n-sheets init --typescript
 
 # 2. Setup I18nProvider in layout.tsx
 # (See Quick Start section)
 
 # 3. Wrap Korean text
-npx i18n-wrapper -p "app/**/*.tsx"
+npx i18n-wrapper
 
 # 4. Check and fix Server Components
-# (Add 'use client' or use createServerTranslation)
+# (Add 'use client' or use createServerI18n)
 
 # 5. Extract keys
-npx i18n-extractor -p "app/**/*.tsx"
+npx i18n-extractor
 
 # 6. Add English translations in locales/en.json
 
@@ -338,18 +444,18 @@ npx i18n-sheets upload -s YOUR_SPREADSHEET_ID
 ### I18nProvider Props
 
 ```tsx
-interface I18nProviderProps {
+interface I18nProviderProps<TLanguage extends string = string> {
   children: ReactNode;
   languageManagerOptions?: LanguageManagerOptions;
   translations?: Record<string, Record<string, string>>;
-  onLanguageChange?: (language: string) => void;
-  initialLanguage?: string; // From getServerLanguage()
+  onLanguageChange?: (language: TLanguage) => void;
+  initialLanguage?: TLanguage;
 }
 
 interface LanguageManagerOptions {
-  defaultLanguage?: string; // default: 'en'
+  defaultLanguage?: string;
   availableLanguages?: LanguageConfig[];
-  cookieName?: string; // default: 'i18n-language'
+  cookieName?: string;
   cookieOptions?: CookieOptions;
 }
 
@@ -357,39 +463,33 @@ interface LanguageConfig {
   code: string;
   name: string;
   flag?: string;
-  direction?: "ltr" | "rtl";
+  dir?: "ltr" | "rtl";
 }
 ```
 
 ### Server-side Utilities
 
 ```tsx
-import {
-  getServerLanguage,
-  createServerTranslation,
-  getServerTranslations
-} from "i18nexus/server";
+import { createServerI18n } from "i18nexus/server";
 
-// Get language from cookies
-const language = getServerLanguage(headers, {
-  cookieName?: string;      // default: 'i18n-language'
-  defaultLanguage?: string; // default: 'en'
+// All-in-one server i18n setup
+const { language, t, translations } = await createServerI18n({
+  cookieStore?: ReadonlyRequestCookies;
+  localesDir?: string;
+  cookieName?: string;
+  defaultLanguage?: string;
+  translations?: Record<string, Record<string, string>>;
 });
-
-// Create translation function
-const t = createServerTranslation(language, translations);
-
-// Get raw translations object
-const dict = getServerTranslations(language, translations);
 ```
 
 ### Client Hooks
 
 ```tsx
-// Translation hook
-const { t, currentLanguage, isReady } = useTranslation();
+// Translation hook with type safety
+const { t, currentLanguage, isReady } = 
+  useTranslation<AppLanguages>();
 
-// Language switcher hook
+// Language switcher hook with type safety
 const {
   currentLanguage,
   availableLanguages,
@@ -397,7 +497,22 @@ const {
   switchToNextLanguage,
   switchToPreviousLanguage,
   isLoading,
-} = useLanguageSwitcher();
+} = useLanguageSwitcher<AppLanguages>();
+```
+
+### Config Utilities
+
+```tsx
+import { defineConfig, type ExtractLanguages } from "i18nexus";
+
+// Define typed config
+const config = defineConfig({
+  languages: ["en", "ko"] as const,
+  // ...
+});
+
+// Extract language type
+type Languages = ExtractLanguages<typeof config>;
 ```
 
 ---
@@ -431,18 +546,25 @@ npx i18n-sheets upload -s YOUR_SPREADSHEET_ID -c ./credentials.json
 ```
 your-project/
 ├── app/
-│   ├── layout.tsx          # I18nProvider setup
-│   ├── page.tsx            # Server or Client Component
+│   ├── layout.tsx              # I18nProvider setup
+│   ├── page.tsx                # Server or Client Component
 │   └── components/
-│       └── Header.tsx      # Client Component with useTranslation
-├── lib/
-│   └── i18n.ts            # Translation exports
+│       └── LanguageSwitcher.tsx # Client Component
 ├── locales/
-│   ├── en.json            # English translations
-│   └── ko.json            # Korean translations
-├── i18nexus.config.json   # i18nexus configuration
-└── credentials.json       # Google Sheets credentials (optional)
+│   ├── en.json                 # English translations
+│   └── ko.json                 # Korean translations
+├── i18nexus.config.ts          # TypeScript configuration
+└── credentials.json            # Google Sheets credentials (optional)
 ```
+
+---
+
+## 🎓 Documentation
+
+- 📖 [QUICK_START.md](./QUICK_START.md) - Quick start guide
+- 🎯 [TYPED_CONFIG.md](./TYPED_CONFIG.md) - Type-safe configuration guide
+- 📊 [Google Sheets Guide](./docs/google-sheets.md)
+- 🖥️ [Server Components Guide](./docs/server-components.md)
 
 ---
 

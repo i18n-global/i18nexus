@@ -5,6 +5,79 @@ All notable changes to i18nexus will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2025-01-15
+
+### 🎯 Major Features - Type Safety
+
+#### TypeScript Configuration Support
+- **NEW**: `i18nexus.config.ts` support for TypeScript configuration files
+- **NEW**: Type inference for language codes with `as const`
+- **NEW**: `defineConfig()` helper for type-safe configuration
+- **NEW**: `ExtractLanguages<T>` type utility to extract language union types
+- **NEW**: Auto-detection of config files (`.ts` > `.js` > `.json`)
+- **NEW**: `--typescript` flag for `i18n-sheets init` command
+
+#### Type-Safe Language Management
+- **NEW**: Generic type parameters for `I18nProvider<TLanguage>`
+- **NEW**: Generic type parameters for `useTranslation<TLanguage>()`
+- **NEW**: Generic type parameters for `useLanguageSwitcher<TLanguage>()`
+- **NEW**: IDE autocomplete support for language codes
+- **NEW**: Compile-time validation for language codes
+- **NEW**: Self-documenting code with explicit language types
+
+#### Custom Import Sources
+- **NEW**: `translationImportSource` configuration option
+- **NEW**: Customize where `i18n-wrapper` imports from
+- **NEW**: Default value: `"i18nexus"`
+- **NEW**: Supports custom paths like `"@/lib/i18n"`
+
+### ✨ Enhancements
+
+#### CLI Tools
+- **IMPROVED**: `i18n-wrapper` now respects `translationImportSource` config
+- **IMPROVED**: `i18n-sheets init` can generate TypeScript config files
+- **IMPROVED**: Better error messages for config file issues
+- **IMPROVED**: Async config loading for better performance
+
+#### Documentation
+- **NEW**: `TYPED_CONFIG.md` - Complete type safety guide
+- **IMPROVED**: README with type safety examples
+- **IMPROVED**: QUICK_START.md simplified to 3-command workflow
+- **IMPROVED**: Demo README with new features
+
+#### Type Definitions
+- **IMPROVED**: Better TypeScript definitions for all hooks and components
+- **IMPROVED**: More precise type constraints for generic parameters
+- **IMPROVED**: Export config types for reusability
+
+### 📝 Documentation
+
+- Complete TypeScript configuration guide
+- Migration guide from JSON to TypeScript config
+- Type safety best practices
+- Examples with IDE autocomplete
+- Comparison of JSON vs TypeScript configs
+
+### 🔧 Breaking Changes
+
+- `loadConfig()` is now async and returns a `Promise`
+- Server-side utilities now use async config loading
+- Config file priority changed: `.ts` > `.js` > `.json`
+
+### 🐛 Bug Fixes
+
+- Fixed type errors in Provider generic implementation
+- Fixed async config loading in bin scripts
+- Fixed linter errors related to `any` types
+- Fixed type assertions in language switching
+
+### 📦 Dependencies
+
+- No new dependencies added
+- All existing dependencies maintained
+
+---
+
 ## [2.1.0] - 2025-01-14
 
 ### 🎉 Major Features
