@@ -4,8 +4,14 @@ import * as fs from "fs";
 import * as path from "path";
 import { glob } from "glob";
 import * as parser from "@babel/parser";
-import traverse, { NodePath } from "@babel/traverse";
-import generate from "@babel/generator";
+import _traverse, { NodePath } from "@babel/traverse";
+// ESM/CJS interop
+const traverse =
+  typeof _traverse === "function" ? _traverse : (_traverse as any).default;
+import _generate from "@babel/generator";
+// ESM/CJS interop
+const generate =
+  typeof _generate === "function" ? _generate : (_generate as any).default;
 import * as t from "@babel/types";
 
 export interface ScriptConfig {
@@ -68,6 +74,66 @@ export class TranslationWrapper {
     return false;
   }
 
+  private convertTemplateLiteralToTranslation(
+    templateLiteral: t.TemplateLiteral,
+  ): {
+    translationKey: string;
+    variables: t.ObjectExpression;
+  } | null {
+    const { quasis, expressions } = templateLiteral;
+
+    // 템플릿 문자열을 번역 키로 변환
+    let translationKey = "";
+    const variableMap: { [key: string]: t.Expression } = {};
+    const seenVariables = new Set<string>();
+
+    for (let i = 0; i < quasis.length; i++) {
+      translationKey += quasis[i].value.raw;
+
+      if (i < expressions.length) {
+        const expr = expressions[i];
+
+        // TSType은 건너뛰기 (Expression만 처리)
+        if (t.isTSType(expr)) {
+          continue;
+        }
+
+        // 변수명 추출
+        let variableName: string;
+        if (t.isIdentifier(expr)) {
+          variableName = expr.name;
+        } else {
+          // 복잡한 표현식은 생성된 코드를 변수명으로 사용
+          const generated = generate(expr);
+          variableName = generated.code.replace(/\./g, "_");
+        }
+
+        // 중복 변수 처리
+        if (!seenVariables.has(variableName)) {
+          variableMap[variableName] = expr;
+          seenVariables.add(variableName);
+        }
+
+        translationKey += `{{${variableName}}}`;
+      }
+    }
+
+    // 변수 객체 생성
+    const properties = Object.entries(variableMap).map(([key, value]) => {
+      // 단순 Identifier인 경우 shorthand 사용
+      if (t.isIdentifier(value) && value.name === key) {
+        return t.objectProperty(t.identifier(key), value, false, true);
+      }
+      // 그 외의 경우 일반 프로퍼티
+      return t.objectProperty(t.identifier(key), value, false, false);
+    });
+
+    return {
+      translationKey,
+      variables: t.objectExpression(properties),
+    };
+  }
+
   private processFunctionBody(path: NodePath<t.Function>): boolean {
     let wasModified = false;
 
@@ -88,6 +154,66 @@ export class TranslationWrapper {
             subPath.replaceWith(t.jsxExpressionContainer(replacement));
           } else {
             subPath.replaceWith(replacement);
+          }
+        }
+      },
+      TemplateLiteral: (subPath) => {
+        // 이미 t() 함수로 래핑된 경우 스킵
+        if (
+          t.isCallExpression(subPath.parent) &&
+          t.isIdentifier(subPath.parent.callee, { name: "t" })
+        ) {
+          return;
+        }
+
+        // import 구문은 스킵
+        const importParent = subPath.findParent((p) => t.isImportDeclaration(p.node));
+        if (importParent?.node && t.isImportDeclaration(importParent.node)) {
+          return;
+        }
+
+        // 템플릿 전체 텍스트를 확인 (한국어 포함 여부)
+        const fullText = subPath.node.quasis.map(q => q.value.raw).join('');
+        if (!/[가-힣]/.test(fullText)) {
+          return;
+        }
+
+        // 템플릿 리터럴이 변수를 포함하는 경우에만 처리
+        if (subPath.node.expressions.length > 0) {
+          const converted = this.convertTemplateLiteralToTranslation(subPath.node);
+          
+          if (converted) {
+            wasModified = true;
+            const replacement = t.callExpression(t.identifier("t"), [
+              t.stringLiteral(converted.translationKey),
+              converted.variables,
+            ]);
+
+            if (t.isJSXExpressionContainer(subPath.parent)) {
+              // JSX 내부의 경우
+              subPath.replaceWith(replacement);
+            } else if (t.isJSXAttribute(subPath.parent)) {
+              // JSX 속성의 경우
+              subPath.replaceWith(t.jsxExpressionContainer(replacement));
+            } else {
+              // 일반 JavaScript 표현식
+              subPath.replaceWith(replacement);
+            }
+          }
+        } else {
+          // 변수가 없는 템플릿 리터럴은 일반 문자열처럼 처리
+          const text = subPath.node.quasis[0].value.raw;
+          if (/[가-힣]/.test(text)) {
+            wasModified = true;
+            const replacement = t.callExpression(t.identifier("t"), [
+              t.stringLiteral(text),
+            ]);
+
+            if (t.isJSXAttribute(subPath.parent)) {
+              subPath.replaceWith(t.jsxExpressionContainer(replacement));
+            } else {
+              subPath.replaceWith(replacement);
+            }
           }
         }
       },
@@ -120,10 +246,10 @@ export class TranslationWrapper {
     let hasImport = false;
 
     traverse(ast, {
-      ImportDeclaration: (path) => {
+      ImportDeclaration: (path: NodePath<t.ImportDeclaration>) => {
         if (path.node.source.value === this.config.translationImportSource) {
           const hasUseTranslation = path.node.specifiers.some(
-            (spec) =>
+            (spec: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier) =>
               t.isImportSpecifier(spec) &&
               t.isIdentifier(spec.imported) &&
               spec.imported.name === "useTranslation",
@@ -184,7 +310,7 @@ export class TranslationWrapper {
         const modifiedComponentPaths: NodePath<t.Function>[] = [];
 
         traverse(ast, {
-          FunctionDeclaration: (path) => {
+          FunctionDeclaration: (path: NodePath<t.FunctionDeclaration>) => {
             const componentName = path.node.id?.name;
             if (componentName && this.isReactComponent(componentName)) {
               if (this.processFunctionBody(path)) {
@@ -193,7 +319,7 @@ export class TranslationWrapper {
               }
             }
           },
-          ArrowFunctionExpression: (path) => {
+          ArrowFunctionExpression: (path: NodePath<t.ArrowFunctionExpression>) => {
             if (
               t.isVariableDeclarator(path.parent) &&
               t.isIdentifier(path.parent.id)
@@ -288,40 +414,5 @@ export async function runTranslationWrapper(
   console.log(`📊 Processed ${processedFiles.length} files`);
 }
 
-// CLI 실행 부분
-if (require.main === module) {
-  const args = process.argv.slice(2);
-  const config: Partial<ScriptConfig> = {};
-
-  for (let i = 0; i < args.length; i++) {
-    switch (args[i]) {
-      case "--pattern":
-      case "-p":
-        config.sourcePattern = args[++i];
-        break;
-      case "--dry-run":
-      case "-d":
-        config.dryRun = true;
-        break;
-      case "--help":
-      case "-h":
-        console.log(`
-Usage: t-wrapper [options]
-
-Options:
-  -p, --pattern <pattern>    Source file pattern (default: "src/**/*.{js,jsx,ts,tsx}")
-  -d, --dry-run             Preview changes without modifying files
-  -h, --help                Show this help message
-
-Examples:
-  t-wrapper
-  t-wrapper -p "app/**/*.tsx"
-  t-wrapper --dry-run
-        `);
-        process.exit(0);
-        break;
-    }
-  }
-
-  runTranslationWrapper(config).catch(console.error);
-}
+// ESM에서는 이 부분을 제거하고 bin 파일에서만 실행
+// CLI 실행은 bin/i18n-wrapper.ts에서 처리됨

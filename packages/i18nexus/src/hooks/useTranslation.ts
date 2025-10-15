@@ -40,7 +40,7 @@ export interface UseTranslationReturn {
  */
 const interpolate = (
   text: string,
-  variables?: TranslationVariables
+  variables?: TranslationVariables,
 ): string => {
   if (!variables) {
     return text;

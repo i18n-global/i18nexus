@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { runTranslationWrapper, ScriptConfig } from "../scripts/t-wrapper";
-import { loadConfig } from "../scripts/config-loader";
+import { runTranslationWrapper, ScriptConfig } from "../scripts/t-wrapper.js";
+import { loadConfig } from "../scripts/config-loader.js";
 
 const args = process.argv.slice(2);
 

@@ -2,7 +2,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { GoogleSheetsManager } from "../scripts/google-sheets";
+import { GoogleSheetsManager } from "../scripts/google-sheets.js";
 
 export interface DownloadConfig {
   credentialsPath?: string;

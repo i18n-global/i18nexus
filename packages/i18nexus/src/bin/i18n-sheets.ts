@@ -4,8 +4,8 @@ import { Command } from "commander";
 import {
   GoogleSheetsManager,
   GoogleSheetsConfig,
-} from "../scripts/google-sheets";
-import { loadConfig } from "../scripts/config-loader";
+} from "../scripts/google-sheets.js";
+import { loadConfig } from "../scripts/config-loader.js";
 import * as fs from "fs";
 import * as path from "path";
 

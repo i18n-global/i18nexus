@@ -81,7 +81,7 @@ export class TranslationExtractor {
 
   private extractTranslationKey(
     path: NodePath<t.CallExpression>,
-    filePath: string
+    filePath: string,
   ): void {
     const { node } = path;
 
@@ -104,8 +104,8 @@ export class TranslationExtractor {
       defaultValue: this.getDefaultValue(
         node.arguments.filter(
           (arg): arg is t.Expression =>
-            !t.isArgumentPlaceholder(arg) && !t.isSpreadElement(arg)
-        )
+            !t.isArgumentPlaceholder(arg) && !t.isSpreadElement(arg),
+        ),
       ),
     };
 
@@ -152,7 +152,7 @@ export class TranslationExtractor {
         (prop) =>
           t.isObjectProperty(prop) &&
           t.isIdentifier(prop.key, { name: "defaultValue" }) &&
-          t.isStringLiteral(prop.value)
+          t.isStringLiteral(prop.value),
       );
 
       if (defaultValueProp && t.isObjectProperty(defaultValueProp)) {
@@ -293,7 +293,7 @@ ${exportObj}
             existingTranslations = JSON.parse(existingContent);
           } catch (error) {
             console.warn(
-              `⚠️  Failed to parse existing ${langFile}, will overwrite`
+              `⚠️  Failed to parse existing ${langFile}, will overwrite`,
             );
           }
         }
@@ -346,7 +346,7 @@ ${exportObj}
       if (files.length === 0) {
         console.warn(
           "⚠️  No files found matching pattern:",
-          this.config.sourcePattern
+          this.config.sourcePattern,
         );
         return;
       }
@@ -363,7 +363,7 @@ ${exportObj}
       const outputData = this.generateOutputData();
 
       console.log(
-        `🔑 Found ${this.extractedKeys.size} unique translation keys`
+        `🔑 Found ${this.extractedKeys.size} unique translation keys`,
       );
 
       // 출력 파일 작성
@@ -378,7 +378,7 @@ ${exportObj}
 }
 
 export async function runTranslationExtractor(
-  config: Partial<ExtractorConfig> = {}
+  config: Partial<ExtractorConfig> = {},
 ): Promise<void> {
   const extractor = new TranslationExtractor(config);
   await extractor.extract();
