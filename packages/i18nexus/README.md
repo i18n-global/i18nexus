@@ -106,6 +106,7 @@ npx i18n-sheets init --typescript
 ```
 
 This creates:
+
 - `i18nexus.config.ts` - TypeScript configuration with type inference
 - `locales/` directory - Translation files (ko.json, en.json)
 
@@ -127,7 +128,8 @@ import koTranslations from "@/locales/ko.json";
 
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
-  const language = cookieStore.get("i18n-language")?.value || config.defaultLanguage;
+  const language =
+    cookieStore.get("i18n-language")?.value || config.defaultLanguage;
 
   return (
     <html lang={language}>
@@ -144,8 +146,7 @@ export default async function RootLayout({ children }) {
           translations={{
             ko: koTranslations,
             en: enTranslations,
-          }}
-        >
+          }}>
           {children}
         </I18nProvider>
       </body>
@@ -161,6 +162,7 @@ npx i18n-wrapper
 ```
 
 **What it does:**
+
 - ✅ Detects Korean text in your components
 - ✅ Wraps with `t()` functions
 - ✅ Adds `useTranslation` imports
@@ -175,6 +177,7 @@ npx i18n-extractor
 ```
 
 This will create/update:
+
 - `locales/ko.json` - Korean translations (auto-filled)
 - `locales/en.json` - English translations (needs manual translation)
 
@@ -198,6 +201,7 @@ Open `locales/en.json` and add English translations:
 ### Why Type Safety?
 
 With TypeScript config, you get:
+
 - ✅ **Autocomplete** in IDE for language codes
 - ✅ **Compile-time errors** for invalid languages
 - ✅ **Refactoring support** when adding/removing languages
@@ -219,7 +223,7 @@ import { AppLanguages } from "@/i18nexus.config";
 
 function LanguageSwitcher() {
   const { changeLanguage } = useLanguageSwitcher<AppLanguages>();
-  
+
   // IDE will autocomplete: "en" | "ko" | "ja"
   return (
     <div>
@@ -327,13 +331,14 @@ export default function LanguageSwitcher() {
 
   return (
     <div>
-      <p>{t("Current Language")}: {currentLanguage}</p>
+      <p>
+        {t("Current Language")}: {currentLanguage}
+      </p>
       {availableLanguages.map((lang) => (
         <button
           key={lang.code}
           onClick={() => changeLanguage(lang.code)}
-          className={currentLanguage === lang.code ? "active" : ""}
-        >
+          className={currentLanguage === lang.code ? "active" : ""}>
           {lang.flag} {lang.name}
         </button>
       ))}
@@ -344,14 +349,14 @@ export default function LanguageSwitcher() {
 
 ### Comparison
 
-| Feature            | Server Components           | Client Components  |
-| ------------------ | --------------------------- | ------------------ |
-| Bundle Size        | ✅ Smaller                  | ⚠️ Larger          |
-| Performance        | ✅ Faster                   | ⚠️ Slower          |
-| Language Switching | ❌ Requires reload          | ✅ Dynamic         |
-| Interactivity      | ❌ Static                   | ✅ Full            |
-| Usage              | `createServerI18n()`        | `useTranslation()` |
-| Directive          | None                        | `"use client"`     |
+| Feature            | Server Components    | Client Components  |
+| ------------------ | -------------------- | ------------------ |
+| Bundle Size        | ✅ Smaller           | ⚠️ Larger          |
+| Performance        | ✅ Faster            | ⚠️ Slower          |
+| Language Switching | ❌ Requires reload   | ✅ Dynamic         |
+| Interactivity      | ❌ Static            | ✅ Full            |
+| Usage              | `createServerI18n()` | `useTranslation()` |
+| Directive          | None                 | `"use client"`     |
 
 ---
 
@@ -486,8 +491,7 @@ const { language, t, translations } = await createServerI18n({
 
 ```tsx
 // Translation hook with type safety
-const { t, currentLanguage, isReady } = 
-  useTranslation<AppLanguages>();
+const { t, currentLanguage, isReady } = useTranslation<AppLanguages>();
 
 // Language switcher hook with type safety
 const {

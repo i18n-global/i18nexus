@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🎯 Major Features - Type Safety
 
 #### TypeScript Configuration Support
+
 - **NEW**: `i18nexus.config.ts` support for TypeScript configuration files
 - **NEW**: Type inference for language codes with `as const`
 - **NEW**: `defineConfig()` helper for type-safe configuration
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: `--typescript` flag for `i18n-sheets init` command
 
 #### Type-Safe Language Management
+
 - **NEW**: Generic type parameters for `I18nProvider<TLanguage>`
 - **NEW**: Generic type parameters for `useTranslation<TLanguage>()`
 - **NEW**: Generic type parameters for `useLanguageSwitcher<TLanguage>()`
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: Self-documenting code with explicit language types
 
 #### Custom Import Sources
+
 - **NEW**: `translationImportSource` configuration option
 - **NEW**: Customize where `i18n-wrapper` imports from
 - **NEW**: Default value: `"i18nexus"`
@@ -34,18 +37,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ Enhancements
 
 #### CLI Tools
+
 - **IMPROVED**: `i18n-wrapper` now respects `translationImportSource` config
 - **IMPROVED**: `i18n-sheets init` can generate TypeScript config files
 - **IMPROVED**: Better error messages for config file issues
 - **IMPROVED**: Async config loading for better performance
 
 #### Documentation
+
 - **NEW**: `TYPED_CONFIG.md` - Complete type safety guide
 - **IMPROVED**: README with type safety examples
 - **IMPROVED**: QUICK_START.md simplified to 3-command workflow
 - **IMPROVED**: Demo README with new features
 
 #### Type Definitions
+
 - **IMPROVED**: Better TypeScript definitions for all hooks and components
 - **IMPROVED**: More precise type constraints for generic parameters
 - **IMPROVED**: Export config types for reusability

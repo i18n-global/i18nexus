@@ -17,6 +17,7 @@ npx i18n-sheets init --typescript
 ```
 
 이 명령어 하나로:
+
 - ✅ `i18nexus.config.ts` 생성 (타입 안전!)
 - ✅ `locales/en.json`, `ko.json` 생성
 - ✅ 모든 설정 완료!
@@ -28,6 +29,7 @@ npx i18n-wrapper
 ```
 
 이 명령어가:
+
 - ✅ 한국어 텍스트 찾아서 `t("한국어")` 로 자동 래핑
 - ✅ `useTranslation` import 자동 추가
 - ✅ 훅 사용 코드 자동 생성
@@ -39,6 +41,7 @@ npx i18n-extractor
 ```
 
 이 명령어로:
+
 - ✅ 모든 `t()` 키 추출
 - ✅ `en.json`, `ko.json` 자동 업데이트
 - ✅ 기존 번역 유지하면서 새 키만 추가
@@ -108,7 +111,7 @@ export default function HomePage() {
   return (
     <div>
       <h1>{t("환영합니다")}</h1>
-      
+
       {/* 타입 안전! 자동완성 지원! */}
       <button onClick={() => changeLanguage("en")}>English</button>
       <button onClick={() => changeLanguage("ko")}>한국어</button>
@@ -127,7 +130,7 @@ export default function HomePage() {
 import { defineConfig } from "i18nexus";
 
 export const config = defineConfig({
-  languages: ["en", "ko", "ja"] as const,  // as const 중요!
+  languages: ["en", "ko", "ja"] as const, // as const 중요!
   defaultLanguage: "ko",
   localesDir: "./locales",
   sourcePattern: "app/**/*.{ts,tsx}",
@@ -140,9 +143,9 @@ export type AppLanguages = (typeof config.languages)[number]; // "en" | "ko" | "
 이제 IDE에서 자동완성과 타입 체크를 받습니다!
 
 ```typescript
-changeLanguage("en");  // ✅ 자동완성!
-changeLanguage("ko");  // ✅ 타입 체크!
-changeLanguage("fr");  // ❌ 컴파일 에러!
+changeLanguage("en"); // ✅ 자동완성!
+changeLanguage("ko"); // ✅ 타입 체크!
+changeLanguage("fr"); // ❌ 컴파일 에러!
 ```
 
 ---
@@ -169,14 +172,14 @@ npx i18n-extractor
 
 ## 💫 주요 특징
 
-| 특징 | 설명 |
-|------|------|
-| **3개 명령어** | `init` → `wrapper` → `extractor` 끝! |
-| **Provider 한 번** | layout.tsx에서 한 번만 설정 |
-| **자동 래핑** | 한국어 텍스트 자동 감지 및 래핑 |
-| **타입 안전** | TypeScript로 언어 코드 자동완성 |
-| **SSR 지원** | Next.js App Router 완벽 지원 |
-| **기존 번역 유지** | 항상 안전하게 병합 |
+| 특징               | 설명                                 |
+| ------------------ | ------------------------------------ |
+| **3개 명령어**     | `init` → `wrapper` → `extractor` 끝! |
+| **Provider 한 번** | layout.tsx에서 한 번만 설정          |
+| **자동 래핑**      | 한국어 텍스트 자동 감지 및 래핑      |
+| **타입 안전**      | TypeScript로 언어 코드 자동완성      |
+| **SSR 지원**       | Next.js App Router 완벽 지원         |
+| **기존 번역 유지** | 항상 안전하게 병합                   |
 
 ---
 

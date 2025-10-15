@@ -136,11 +136,11 @@ import { AppLanguages } from "@/i18nexus.config";
 
 function MyComponent() {
   const { changeLanguage } = useLanguageSwitcher<AppLanguages>();
-  
+
   // ✅ Type-safe! IDE autocomplete!
   changeLanguage("en");
   changeLanguage("ko");
-  
+
   // ❌ Compile error!
   // changeLanguage("fr");
 }
@@ -149,6 +149,7 @@ function MyComponent() {
 ### 2. **Automatic String Wrapping**
 
 Run `npx i18n-wrapper` to automatically:
+
 - Detect Korean strings in your code
 - Wrap them with `t()` functions
 - Add necessary imports
@@ -157,6 +158,7 @@ Run `npx i18n-wrapper` to automatically:
 ### 3. **Translation Key Extraction**
 
 Run `npx i18n-extractor` to:
+
 - Extract all `t()` calls from your code
 - Generate/update JSON translation files
 - Preserve existing translations
@@ -263,7 +265,7 @@ This demo teaches you:
 function MyComponent() {
   const [lang, setLang] = useState("ko");
   const text = lang === "ko" ? "안녕하세요" : "Hello";
-  
+
   return <h1>{text}</h1>;
 }
 ```
@@ -279,12 +281,13 @@ import { AppLanguages } from "@/i18nexus.config";
 
 function MyComponent() {
   const { t } = useTranslation<AppLanguages>();
-  
+
   return <h1>{t("안녕하세요")}</h1>;
 }
 ```
 
 **Benefits:**
+
 - ✅ Type-safe language codes
 - ✅ Automatically wrapped with `npx i18n-wrapper`
 - ✅ Automatically extracted with `npx i18n-extractor`

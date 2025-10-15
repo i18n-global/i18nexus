@@ -1,5 +1,58 @@
 # Changelog
 
+## [1.4.0] - 2025-01-15
+
+### 🎯 Major Features - Type Safety
+
+#### TypeScript Configuration Support
+- **NEW**: `i18nexus.config.ts` support for TypeScript configuration files
+- **NEW**: Type inference for language codes with `as const`
+- **NEW**: `--typescript` flag for `i18n-sheets init` command
+- **NEW**: Auto-detection of config files (`.ts` > `.js` > `.json`)
+- **NEW**: `translationImportSource` configuration option
+
+#### Enhanced CLI Tools
+- **IMPROVED**: `i18n-wrapper` now respects `translationImportSource` config
+- **IMPROVED**: `i18n-sheets init` can generate TypeScript config files
+- **IMPROVED**: Better error messages for config file issues
+- **IMPROVED**: Async config loading for better performance
+
+#### Custom Import Sources
+- **NEW**: `translationImportSource` configuration option
+- **NEW**: Customize where `i18n-wrapper` imports from
+- **NEW**: Default value: `"i18nexus"`
+- **NEW**: Supports custom paths like `"@/lib/i18n"`
+
+### ✨ Enhancements
+
+#### CLI Tools
+- **IMPROVED**: Better TypeScript definitions for all tools
+- **IMPROVED**: More precise type constraints for generic parameters
+- **IMPROVED**: Export config types for reusability
+
+#### Documentation
+- **IMPROVED**: README with type safety examples
+- **IMPROVED**: Better error messages and help text
+- **IMPROVED**: Examples with TypeScript configuration
+
+### 🔧 Breaking Changes
+
+- `loadConfig()` is now async and returns a `Promise`
+- Config file priority changed: `.ts` > `.js` > `.json`
+
+### 🐛 Bug Fixes
+
+- Fixed async config loading in bin scripts
+- Fixed linter errors related to `any` types
+- Fixed type assertions in language switching
+
+### 📦 Dependencies
+
+- No new dependencies added
+- All existing dependencies maintained
+
+---
+
 ## Recent Updates
 
 ### Features Added
