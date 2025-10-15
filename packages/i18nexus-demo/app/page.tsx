@@ -2,6 +2,7 @@
 
 import { useTranslation } from "i18nexus";
 import Link from "next/link";
+import DownloadStats from "./components/DownloadStats";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -223,7 +224,7 @@ export default function HomePage() {
       </section>
 
       {/* Project Structure Section */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 p-10">
+      <section className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl border border-slate-700 p-10 mb-20">
         <div className="flex items-center mb-8">
           <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg shadow-purple-500/30">
             <span className="text-white font-bold text-2xl">📁</span>
@@ -284,6 +285,37 @@ lib/
               {t("Store in lib/translations/ as JSON")}
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* NPM Download Stats Section */}
+      <section className="mb-20">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-white mb-3">
+            {t("Download Statistics")}
+          </h2>
+          <p className="text-slate-400">
+            {t("Real-time download stats from npm registry")}
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <DownloadStats
+            packageName="i18nexus"
+            displayName="i18nexus"
+            color="blue"
+          />
+          <DownloadStats
+            packageName="i18nexus-tools"
+            displayName="i18nexus-tools"
+            color="indigo"
+          />
+        </div>
+
+        <div className="text-center mt-8">
+          <p className="text-sm text-slate-500">
+            {t("Data updated hourly from npm public API")}
+          </p>
         </div>
       </section>
     </main>

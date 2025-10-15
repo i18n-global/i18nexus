@@ -166,5 +166,11 @@
   "Explore CLI Tools": "CLI 도구 살펴보기",
   "Fix manually": "수동으로 수정",
   "한국어": "한국어",
-  "The extractor intelligently merges with existing translations:": "extractor는 기존 번역과 스마트하게 병합합니다:"
+  "The extractor intelligently merges with existing translations:": "extractor는 기존 번역과 스마트하게 병합합니다:",
+  "Download Statistics": "다운로드 통계",
+  "Real-time download stats from npm registry": "npm 레지스트리의 실시간 다운로드 통계",
+  "Loading...": "로딩 중...",
+  "Failed to load": "로드 실패",
+  "Downloads last month": "지난 달 다운로드",
+  "Data updated hourly from npm public API": "npm public API에서 매시간 업데이트되는 데이터"
 }
