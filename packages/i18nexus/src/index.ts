@@ -7,6 +7,9 @@ export { useTranslation, useLanguageSwitcher } from "./hooks/useTranslation";
 export type {
   UseTranslationReturn,
   UseLanguageSwitcherReturn,
+  TranslationVariables,
+  TranslationStyles,
+  VariableStyle,
 } from "./hooks/useTranslation";
 
 // Utils

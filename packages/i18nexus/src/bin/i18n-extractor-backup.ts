@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-import { runTranslationExtractor, ExtractorConfig } from "../scripts/extractor.js";
+import {
+  runTranslationExtractor,
+  ExtractorConfig,
+} from "../scripts/extractor.js";
 
 const args = process.argv.slice(2);
 const config: Partial<ExtractorConfig> = {};

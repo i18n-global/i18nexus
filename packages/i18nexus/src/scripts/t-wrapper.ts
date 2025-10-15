@@ -42,7 +42,7 @@ export class TranslationWrapper {
         t.objectPattern([
           t.objectProperty(t.identifier("t"), t.identifier("t"), false, true),
         ]),
-        hookCall,
+        hookCall
       ),
     ]);
   }
@@ -75,7 +75,7 @@ export class TranslationWrapper {
   }
 
   private convertTemplateLiteralToTranslation(
-    templateLiteral: t.TemplateLiteral,
+    templateLiteral: t.TemplateLiteral
   ): {
     translationKey: string;
     variables: t.ObjectExpression;
@@ -167,21 +167,25 @@ export class TranslationWrapper {
         }
 
         // import 구문은 스킵
-        const importParent = subPath.findParent((p) => t.isImportDeclaration(p.node));
+        const importParent = subPath.findParent((p) =>
+          t.isImportDeclaration(p.node)
+        );
         if (importParent?.node && t.isImportDeclaration(importParent.node)) {
           return;
         }
 
         // 템플릿 전체 텍스트를 확인 (한국어 포함 여부)
-        const fullText = subPath.node.quasis.map(q => q.value.raw).join('');
+        const fullText = subPath.node.quasis.map((q) => q.value.raw).join("");
         if (!/[가-힣]/.test(fullText)) {
           return;
         }
 
         // 템플릿 리터럴이 변수를 포함하는 경우에만 처리
         if (subPath.node.expressions.length > 0) {
-          const converted = this.convertTemplateLiteralToTranslation(subPath.node);
-          
+          const converted = this.convertTemplateLiteralToTranslation(
+            subPath.node
+          );
+
           if (converted) {
             wasModified = true;
             const replacement = t.callExpression(t.identifier("t"), [
@@ -231,7 +235,7 @@ export class TranslationWrapper {
 
           // t() 함수 호출로 감싸기
           const replacement = t.jsxExpressionContainer(
-            t.callExpression(t.identifier("t"), [t.stringLiteral(text)]),
+            t.callExpression(t.identifier("t"), [t.stringLiteral(text)])
           );
 
           subPath.replaceWith(replacement);
@@ -249,18 +253,23 @@ export class TranslationWrapper {
       ImportDeclaration: (path: NodePath<t.ImportDeclaration>) => {
         if (path.node.source.value === this.config.translationImportSource) {
           const hasUseTranslation = path.node.specifiers.some(
-            (spec: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier) =>
+            (
+              spec:
+                | t.ImportSpecifier
+                | t.ImportDefaultSpecifier
+                | t.ImportNamespaceSpecifier
+            ) =>
               t.isImportSpecifier(spec) &&
               t.isIdentifier(spec.imported) &&
-              spec.imported.name === "useTranslation",
+              spec.imported.name === "useTranslation"
           );
 
           if (!hasUseTranslation) {
             path.node.specifiers.push(
               t.importSpecifier(
                 t.identifier("useTranslation"),
-                t.identifier("useTranslation"),
-              ),
+                t.identifier("useTranslation")
+              )
             );
           }
           hasImport = true;
@@ -273,10 +282,10 @@ export class TranslationWrapper {
         [
           t.importSpecifier(
             t.identifier("useTranslation"),
-            t.identifier("useTranslation"),
+            t.identifier("useTranslation")
           ),
         ],
-        t.stringLiteral(this.config.translationImportSource),
+        t.stringLiteral(this.config.translationImportSource)
       );
       ast.program.body.unshift(importDeclaration);
       return true;
@@ -319,7 +328,9 @@ export class TranslationWrapper {
               }
             }
           },
-          ArrowFunctionExpression: (path: NodePath<t.ArrowFunctionExpression>) => {
+          ArrowFunctionExpression: (
+            path: NodePath<t.ArrowFunctionExpression>
+          ) => {
             if (
               t.isVariableDeclarator(path.parent) &&
               t.isIdentifier(path.parent.id)
@@ -385,7 +396,7 @@ export class TranslationWrapper {
           console.log(
             `🔧 ${filePath} - ${
               this.config.dryRun ? "Would be modified" : "Modified"
-            }`,
+            }`
           );
         }
       } catch (error) {
@@ -400,7 +411,7 @@ export class TranslationWrapper {
 }
 
 export async function runTranslationWrapper(
-  config: Partial<ScriptConfig> = {},
+  config: Partial<ScriptConfig> = {}
 ) {
   const wrapper = new TranslationWrapper(config);
 

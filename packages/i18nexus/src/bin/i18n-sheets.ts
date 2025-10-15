@@ -35,22 +35,22 @@ const addCommonOptions = (cmd: Command) => {
     .option(
       "-c, --credentials <path>",
       "Path to Google service account credentials JSON file",
-      projectConfig?.googleSheets?.credentialsPath || "./credentials.json",
+      projectConfig?.googleSheets?.credentialsPath || "./credentials.json"
     )
     .option(
       "-s, --spreadsheet <id>",
       "Google Spreadsheet ID",
-      projectConfig?.googleSheets?.spreadsheetId,
+      projectConfig?.googleSheets?.spreadsheetId
     )
     .option(
       "-w, --worksheet <name>",
       "Worksheet name",
-      projectConfig?.googleSheets?.sheetName || "Translations",
+      projectConfig?.googleSheets?.sheetName || "Translations"
     )
     .option(
       "-l, --locales <dir>",
       "Locales directory",
-      projectConfig?.localesDir || "./locales",
+      projectConfig?.localesDir || "./locales"
     );
 };
 
@@ -65,7 +65,7 @@ const checkConfig = (options: any): GoogleSheetsConfig => {
 
   if (!spreadsheetId) {
     console.error(
-      "❌ Spreadsheet ID is required. Use -s option, set in i18nexus.config.js, or set GOOGLE_SPREADSHEET_ID environment variable.",
+      "❌ Spreadsheet ID is required. Use -s option, set in i18nexus.config.js, or set GOOGLE_SPREADSHEET_ID environment variable."
     );
     process.exit(1);
   }
@@ -73,7 +73,7 @@ const checkConfig = (options: any): GoogleSheetsConfig => {
   if (!fs.existsSync(credentialsPath)) {
     console.error(`❌ Credentials file not found: ${credentialsPath}`);
     console.error(
-      "Please download your Google Service Account key file and specify its path with -c option or in i18nexus.config.js.",
+      "Please download your Google Service Account key file and specify its path with -c option or in i18nexus.config.js."
     );
     process.exit(1);
   }
@@ -90,7 +90,7 @@ addCommonOptions(
   program
     .command("upload")
     .description("Upload local translation files to Google Sheets")
-    .option("-f, --force", "Force upload even if keys already exist"),
+    .option("-f, --force", "Force upload even if keys already exist")
 ).action(async (options) => {
   try {
     console.log("📤 Starting upload to Google Sheets...");
@@ -117,8 +117,8 @@ addCommonOptions(
     .option(
       "--languages <langs>",
       "Comma-separated list of languages",
-      projectConfig?.languages.join(",") || "en,ko",
-    ),
+      projectConfig?.languages.join(",") || "en,ko"
+    )
 ).action(async (options) => {
   try {
     console.log("📥 Starting download from Google Sheets...");
@@ -158,7 +158,7 @@ ${exportObj}
 addCommonOptions(
   program
     .command("sync")
-    .description("Bidirectional sync between local files and Google Sheets"),
+    .description("Bidirectional sync between local files and Google Sheets")
 ).action(async (options) => {
   try {
     console.log("🔄 Starting bidirectional sync...");
@@ -181,7 +181,7 @@ addCommonOptions(
 addCommonOptions(
   program
     .command("status")
-    .description("Show Google Sheets status and statistics"),
+    .description("Show Google Sheets status and statistics")
 ).action(async (options) => {
   try {
     console.log("📊 Checking Google Sheets status...");
@@ -202,7 +202,7 @@ addCommonOptions(
       const languages = fs
         .readdirSync(options.locales)
         .filter((item) =>
-          fs.statSync(path.join(options.locales, item)).isDirectory(),
+          fs.statSync(path.join(options.locales, item)).isDirectory()
         );
 
       console.log(`\n📁 Local Files Status:`);
@@ -218,7 +218,7 @@ addCommonOptions(
 
         files.forEach((file) => {
           const content = JSON.parse(
-            fs.readFileSync(path.join(langDir, file), "utf-8"),
+            fs.readFileSync(path.join(langDir, file), "utf-8")
           );
           totalKeys += Object.keys(content).length;
         });
@@ -243,7 +243,7 @@ program
   .option(
     "-c, --credentials <path>",
     "Path to credentials file",
-    "./credentials.json",
+    "./credentials.json"
   )
   .option("-l, --locales <dir>", "Locales directory", "./locales")
   .option("--languages <langs>", "Comma-separated list of languages", "en,ko")
@@ -270,7 +270,7 @@ program
 
       fs.writeFileSync(
         "i18nexus.config.json",
-        JSON.stringify(configData, null, 2),
+        JSON.stringify(configData, null, 2)
       );
       console.log("✅ Created i18nexus.config.json");
 
@@ -318,7 +318,7 @@ ${exportObj}
         if (!fs.existsSync(options.credentials)) {
           console.log("\n📝 Google Service Account Setup:");
           console.log(
-            "1. Go to Google Cloud Console (https://console.cloud.google.com/)",
+            "1. Go to Google Cloud Console (https://console.cloud.google.com/)"
           );
           console.log("2. Create a new project or select existing one");
           console.log("3. Enable Google Sheets API");
@@ -331,7 +331,7 @@ ${exportObj}
           console.log("3. Copy the spreadsheet ID from the URL");
 
           console.log(
-            "\n⚠️  Please add the credentials file and try again for Google Sheets integration.",
+            "\n⚠️  Please add the credentials file and try again for Google Sheets integration."
           );
         } else {
           // 설정 테스트
@@ -349,7 +349,7 @@ ${exportObj}
             console.error("❌ Cannot access the spreadsheet. Please check:");
             console.error("   1. Spreadsheet ID is correct");
             console.error(
-              "   2. Service account has access to the spreadsheet",
+              "   2. Service account has access to the spreadsheet"
             );
           } else {
             await manager.ensureWorksheet();
@@ -372,7 +372,7 @@ GOOGLE_CREDENTIALS_PATH=${options.credentials}
       console.log("1. Update i18nexus.config.json with your project settings");
       console.log("2. Run 'i18n-wrapper' to wrap hardcoded strings");
       console.log(
-        "3. Run 'i18n-extractor' to extract translation keys to en.json and ko.json",
+        "3. Run 'i18n-extractor' to extract translation keys to en.json and ko.json"
       );
       if (options.spreadsheet) {
         console.log("4. Run 'i18n-sheets upload' to sync with Google Sheets");
@@ -388,22 +388,22 @@ program.on("--help", () => {
   console.log("");
   console.log("Examples:");
   console.log(
-    "  $ i18n-sheets init                                          # Initialize project without Google Sheets",
+    "  $ i18n-sheets init                                          # Initialize project without Google Sheets"
   );
   console.log(
-    "  $ i18n-sheets init -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms  # Initialize with Google Sheets",
+    "  $ i18n-sheets init -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms  # Initialize with Google Sheets"
   );
   console.log(
-    "  $ i18n-sheets upload -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "  $ i18n-sheets upload -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
   );
   console.log(
-    "  $ i18n-sheets download -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "  $ i18n-sheets download -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
   );
   console.log(
-    "  $ i18n-sheets sync -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "  $ i18n-sheets sync -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
   );
   console.log(
-    "  $ i18n-sheets status -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "  $ i18n-sheets status -s 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
   );
   console.log("");
   console.log("Environment Variables:");
@@ -431,7 +431,7 @@ program
       await manager.convertCSVToLocalTranslations(
         options.csvFile,
         options.locales,
-        languages,
+        languages
       );
 
       console.log("✅ CSV to JSON conversion completed successfully");
