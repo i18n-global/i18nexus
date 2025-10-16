@@ -44,7 +44,8 @@ const DEFAULT_CONFIG: Required<DownloadConfig> = {
 };
 
 export async function downloadTranslations(
-  config: Partial<DownloadConfig> = {}
+  config: Partial<DownloadConfig> = {},
+  options: { force?: boolean } = {}
 ) {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
@@ -74,14 +75,23 @@ export async function downloadTranslations(
     // 인증
     await sheetsManager.authenticate();
 
-    // 번역 파일 다운로드
-    await sheetsManager.saveTranslationsToLocal(
-      finalConfig.localesDir,
-      finalConfig.languages
-    );
+    // 번역 파일 다운로드 (force 옵션에 따라 전체 또는 증분)
+    if (options.force) {
+      console.log("🔄 Force mode: Overwriting all translations...");
+      await sheetsManager.saveTranslationsToLocal(
+        finalConfig.localesDir,
+        finalConfig.languages
+      );
+    } else {
+      console.log("📝 Incremental mode: Adding new translations only...");
+      await sheetsManager.saveTranslationsToLocalIncremental(
+        finalConfig.localesDir,
+        finalConfig.languages
+      );
+    }
 
-    // index.tsx 생성
-    generateIndexFile(finalConfig.localesDir, finalConfig.languages);
+    // index.tsx 생성 (선택사항)
+    // generateIndexFile(finalConfig.localesDir, finalConfig.languages);
 
     console.log("✅ Translation download completed successfully");
   } catch (error) {
@@ -131,6 +141,9 @@ if (require.main === module) {
         console.log(`
 Usage: i18n-download [options]
 
+Download translations from Google Sheets (incremental - only adds new keys).
+Use i18n-download-force to overwrite existing translations.
+
 Options:
   -c, --credentials <path>     Path to Google Sheets credentials file (default: "./credentials.json")
   -s, --spreadsheet-id <id>    Google Spreadsheet ID (required)
@@ -143,6 +156,8 @@ Examples:
   i18n-download -s "your-spreadsheet-id"
   i18n-download -c "./my-creds.json" -s "your-spreadsheet-id" -l "./translations"
   i18n-download -s "your-spreadsheet-id" --languages "en,ko,ja"
+
+Note: This command only adds new translations. To force overwrite, use i18n-download-force.
         `);
         process.exit(0);
         break;

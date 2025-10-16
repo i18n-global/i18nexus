@@ -270,7 +270,7 @@ export class GoogleSheetsManager {
   }
 
   /**
-   * Google Sheets 데이터를 로컬 번역 파일로 저장
+   * Google Sheets 데이터를 로컬 번역 파일로 저장 (언어별 파일: en.json, ko.json)
    */
   async saveTranslationsToLocal(
     localesDir: string,
@@ -284,13 +284,13 @@ export class GoogleSheetsManager {
         return;
       }
 
-      // 언어별로 번역 파일 생성
-      for (const lang of languages) {
-        const langDir = path.join(localesDir, lang);
-        if (!fs.existsSync(langDir)) {
-          fs.mkdirSync(langDir, { recursive: true });
-        }
+      // locales 디렉토리가 없으면 생성
+      if (!fs.existsSync(localesDir)) {
+        fs.mkdirSync(localesDir, { recursive: true });
+      }
 
+      // 언어별로 번역 파일 생성 (locales/en.json, locales/ko.json 형식)
+      for (const lang of languages) {
         const translationObj: Record<string, string> = {};
         translations.forEach((row) => {
           if (row[lang]) {
@@ -298,7 +298,7 @@ export class GoogleSheetsManager {
           }
         });
 
-        const filePath = path.join(langDir, "common.json");
+        const filePath = path.join(localesDir, `${lang}.json`);
         fs.writeFileSync(
           filePath,
           JSON.stringify(translationObj, null, 2),
@@ -316,43 +316,100 @@ export class GoogleSheetsManager {
   }
 
   /**
-   * 로컬 번역 파일들 읽기
+   * Google Sheets 데이터를 로컬 번역 파일로 저장 (증분 업데이트 - 추가된 데이터만)
+   */
+  async saveTranslationsToLocalIncremental(
+    localesDir: string,
+    languages: string[] = ["en", "ko"]
+  ): Promise<void> {
+    try {
+      const translations = await this.downloadTranslations();
+
+      if (translations.length === 0) {
+        console.log("📝 No translations to save");
+        return;
+      }
+
+      // locales 디렉토리가 없으면 생성
+      if (!fs.existsSync(localesDir)) {
+        fs.mkdirSync(localesDir, { recursive: true });
+      }
+
+      // 언어별로 번역 파일 생성/업데이트
+      for (const lang of languages) {
+        const filePath = path.join(localesDir, `${lang}.json`);
+
+        // 기존 번역 파일 읽기
+        let existingTranslations: Record<string, string> = {};
+        if (fs.existsSync(filePath)) {
+          existingTranslations = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        }
+
+        // 새로운 번역만 추가 (기존 키는 유지)
+        let addedCount = 0;
+        translations.forEach((row) => {
+          if (row[lang] && !existingTranslations[row.key]) {
+            existingTranslations[row.key] = row[lang];
+            addedCount++;
+          }
+        });
+
+        fs.writeFileSync(
+          filePath,
+          JSON.stringify(existingTranslations, null, 2),
+          "utf-8"
+        );
+
+        console.log(
+          `📝 Added ${addedCount} new ${lang} translations to ${filePath} (total: ${Object.keys(existingTranslations).length})`
+        );
+      }
+    } catch (error) {
+      console.error("❌ Failed to save translations to local:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 로컬 번역 파일들 읽기 (locales/en.json, locales/ko.json 형식)
    */
   async readLocalTranslations(localesDir: string): Promise<TranslationRow[]> {
     const translations: TranslationRow[] = [];
     const allKeys = new Set<string>();
 
-    // 지원 언어 디렉토리 찾기
-    const languages = fs
-      .readdirSync(localesDir)
-      .filter((item) => fs.statSync(path.join(localesDir, item)).isDirectory());
+    if (!fs.existsSync(localesDir)) {
+      console.log(`⚠️  Locales directory not found: ${localesDir}`);
+      return [];
+    }
 
-    // 각 언어의 번역 파일들 읽기
+    // locales 디렉토리에서 .json 파일들 찾기 (en.json, ko.json 등)
+    const files = fs
+      .readdirSync(localesDir)
+      .filter((file) => file.endsWith(".json") && file !== "index.ts");
+
     const translationData: Record<string, Record<string, string>> = {};
 
-    for (const lang of languages) {
-      const langDir = path.join(localesDir, lang);
-      const files = fs
-        .readdirSync(langDir)
-        .filter((file) => file.endsWith(".json"));
+    // 각 언어 파일 읽기
+    for (const file of files) {
+      const lang = path.basename(file, ".json"); // en.json -> en
+      const filePath = path.join(localesDir, file);
 
-      translationData[lang] = {};
-
-      for (const file of files) {
-        const filePath = path.join(langDir, file);
+      try {
         const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        translationData[lang] = content;
 
-        Object.entries(content).forEach(([key, value]) => {
-          translationData[lang][key] = value as string;
+        Object.keys(content).forEach((key) => {
           allKeys.add(key);
         });
+      } catch (error) {
+        console.warn(`⚠️  Failed to read ${filePath}:`, error);
       }
     }
 
     // 모든 키에 대해 번역 행 생성
     allKeys.forEach((key) => {
       const row: TranslationRow = { key };
-      languages.forEach((lang) => {
+      Object.keys(translationData).forEach((lang) => {
         row[lang] = translationData[lang][key] || "";
       });
       translations.push(row);

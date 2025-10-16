@@ -44,6 +44,8 @@ export interface ExtractedKey {
 export class TranslationExtractor {
   private config: Required<ExtractorConfig>;
   private extractedKeys: Map<string, ExtractedKey> = new Map();
+  // 상수 저장: 변수명 -> AST Node
+  private constants: Map<string, t.VariableDeclarator> = new Map();
 
   constructor(config: Partial<ExtractorConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -69,6 +71,20 @@ export class TranslationExtractor {
         ],
       });
 
+      // Step 1: 먼저 상수 선언 수집
+      traverse(ast, {
+        VariableDeclaration: (path) => {
+          if (path.node.kind === "const") {
+            path.node.declarations.forEach((declarator) => {
+              if (t.isIdentifier(declarator.id)) {
+                this.constants.set(declarator.id.name, declarator);
+              }
+            });
+          }
+        },
+      });
+
+      // Step 2: t() 호출 추출
       traverse(ast, {
         CallExpression: (path) => {
           this.extractTranslationKey(path, filePath);
@@ -90,13 +106,33 @@ export class TranslationExtractor {
       return;
     }
 
-    // 첫 번째 인수가 문자열인지 확인
     const firstArg = node.arguments[0];
-    if (!t.isStringLiteral(firstArg)) {
+
+    // Case 1: t("문자열") - 직접 문자열
+    if (t.isStringLiteral(firstArg)) {
+      this.addExtractedKey(firstArg.value, node, filePath);
       return;
     }
 
-    const key = firstArg.value;
+    // Case 2: t(item.label) - MemberExpression
+    if (t.isMemberExpression(firstArg)) {
+      this.extractFromMemberExpression(firstArg, node, path, filePath);
+      return;
+    }
+
+    // Case 3: t(variable) - 단순 변수 참조
+    if (t.isIdentifier(firstArg)) {
+      this.extractFromIdentifier(firstArg, node, filePath);
+      return;
+    }
+  }
+
+  private addExtractedKey(
+    key: string,
+    node: t.CallExpression,
+    filePath: string,
+    source?: string
+  ): void {
     const loc = node.loc;
 
     const extractedKey: ExtractedKey = {
@@ -118,13 +154,181 @@ export class TranslationExtractor {
       extractedKey.columnNumber = loc.start.column;
     }
 
-    // 중복 키 처리 - 첫 번째 발견된 것을 유지하거나 위치 정보 추가
+    // 중복 키 처리
     const existingKey = this.extractedKeys.get(key);
     if (existingKey) {
-      // 동일한 키가 여러 곳에서 사용되는 경우 배열로 관리할 수도 있음
-      console.log(`🔄 Duplicate key found: "${key}" in ${filePath}`);
+      console.log(
+        `🔄 Duplicate key found: "${key}" ${source ? `from ${source}` : ""}`
+      );
     } else {
       this.extractedKeys.set(key, extractedKey);
+      if (source) {
+        console.log(`   ✅ Extracted from ${source}: "${key}"`);
+      }
+    }
+  }
+
+  /**
+   * t(item.label) 형태 처리
+   * item이 어디서 왔는지 추적
+   */
+  private extractFromMemberExpression(
+    memberExpr: t.MemberExpression,
+    node: t.CallExpression,
+    path: NodePath<t.CallExpression>,
+    filePath: string
+  ): void {
+    // item.label에서 property 가져오기
+    if (!t.isIdentifier(memberExpr.property)) {
+      return;
+    }
+
+    const propertyName = memberExpr.property.name;
+
+    // item이 무엇인지 확인
+    if (!t.isIdentifier(memberExpr.object)) {
+      return;
+    }
+
+    const objectName = memberExpr.object.name;
+
+    // Case 1: CONSTANT.property 직접 접근
+    const constant = this.constants.get(objectName);
+    if (constant && t.isObjectExpression(constant.init)) {
+      this.extractFromObjectProperty(
+        constant.init,
+        propertyName,
+        node,
+        filePath,
+        objectName
+      );
+      return;
+    }
+
+    // Case 2: item.property (배열 메서드 콜백 내부)
+    // item이 NAV_ITEMS.map((item) => ...) 같은 컨텍스트에서 왔는지 확인
+    this.extractFromArrayElement(
+      objectName,
+      propertyName,
+      path,
+      node,
+      filePath
+    );
+  }
+
+  /**
+   * CONSTANT.property 형태에서 값 추출
+   */
+  private extractFromObjectProperty(
+    objectExpr: t.ObjectExpression,
+    propertyName: string,
+    node: t.CallExpression,
+    filePath: string,
+    constantName: string
+  ): void {
+    const property = objectExpr.properties.find((prop) => {
+      if (t.isObjectProperty(prop)) {
+        if (t.isIdentifier(prop.key) && prop.key.name === propertyName) {
+          return true;
+        }
+        if (t.isStringLiteral(prop.key) && prop.key.value === propertyName) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (
+      property &&
+      t.isObjectProperty(property) &&
+      t.isStringLiteral(property.value)
+    ) {
+      this.addExtractedKey(
+        property.value.value,
+        node,
+        filePath,
+        `${constantName}.${propertyName}`
+      );
+    }
+  }
+
+  /**
+   * 배열 요소의 속성 추출 (item.label)
+   */
+  private extractFromArrayElement(
+    itemName: string,
+    propertyName: string,
+    path: NodePath<t.CallExpression>,
+    node: t.CallExpression,
+    filePath: string
+  ): void {
+    // item이 어떤 함수의 파라미터인지 확인
+    const binding = path.scope.getBinding(itemName);
+    if (!binding || !binding.path.isIdentifier()) {
+      return;
+    }
+
+    // 파라미터의 부모가 함수인지 확인
+    const funcParent = binding.path.parentPath;
+    if (
+      !funcParent ||
+      !(
+        funcParent.isArrowFunctionExpression() ||
+        funcParent.isFunctionExpression()
+      )
+    ) {
+      return;
+    }
+
+    // 그 함수가 배열 메서드의 콜백인지 확인
+    const callExprParent = funcParent.parentPath;
+    if (!callExprParent || !callExprParent.isCallExpression()) {
+      return;
+    }
+
+    const callee = callExprParent.node.callee;
+    if (!t.isMemberExpression(callee) || !t.isIdentifier(callee.object)) {
+      return;
+    }
+
+    // 배열 이름 가져오기
+    const arrayName = callee.object.name;
+    const constant = this.constants.get(arrayName);
+
+    if (!constant || !t.isArrayExpression(constant.init)) {
+      return;
+    }
+
+    // 배열의 각 요소에서 propertyName 추출
+    constant.init.elements.forEach((element) => {
+      if (element && t.isObjectExpression(element)) {
+        this.extractFromObjectProperty(
+          element,
+          propertyName,
+          node,
+          filePath,
+          `${arrayName}[].${propertyName}`
+        );
+      }
+    });
+  }
+
+  /**
+   * t(variable) 형태 처리
+   */
+  private extractFromIdentifier(
+    identifier: t.Identifier,
+    node: t.CallExpression,
+    filePath: string
+  ): void {
+    const constant = this.constants.get(identifier.name);
+    if (constant && t.isStringLiteral(constant.init)) {
+      this.addExtractedKey(
+        constant.init.value,
+        node,
+        filePath,
+        identifier.name
+      );
     }
   }
 

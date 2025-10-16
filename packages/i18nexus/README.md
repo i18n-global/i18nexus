@@ -28,12 +28,36 @@ i18nexus is a comprehensive React internationalization toolkit that **automates 
 - **🔄 3-Command Setup**: `init` → `wrapper` → `extractor` - Done!
 - **🍪 Smart Persistence**: Cookie-based language management with SSR support
 - **📊 Team Collaboration**: Direct Google Sheets integration for translators
+- **🛠️ Developer Tools**: React Query-style devtools for language debugging (DEV mode only)
 
 ---
 
 ## 🌟 Features
 
-### 🎯 Type-Safe Language Management (NEW!)
+### 🛠️ Developer Tools (NEW!)
+
+Beautiful React Query-style devtools for debugging your i18n setup in development:
+
+- � Modern, intuitive UI positioned at bottom-left (customizable)
+- 🌐 Current language display with loading states
+- 🔍 Browser language detection with quick switch
+- 🔄 One-click language switching
+- 📊 Translation statistics (loaded keys, available languages)
+- ⚡ Auto-removed in production builds
+- ⌨️ ESC key support to close
+
+```tsx
+import { I18nProvider, I18NexusDevtools } from "i18nexus";
+
+<I18nProvider {...config}>
+  <YourApp />
+  <I18NexusDevtools /> {/* Only renders in development */}
+</I18nProvider>;
+```
+
+See [DEVTOOLS.md](./DEVTOOLS.md) for full documentation.
+
+### �🎯 Type-Safe Language Management
 
 With TypeScript config support, get **IDE autocomplete** and **compile-time validation** for language codes:
 

@@ -98,7 +98,34 @@ npx i18n-extractor --dry-run
 - CSV: 구글 시트 호환 형식 출력 (Key, English, Korean)
 - 중복 키 감지 및 보고
 
-### 3. i18n-sheets - Google Sheets 연동
+### 3. i18n-upload / i18n-download - Google Sheets 업로드/다운로드
+
+로컬 번역 파일(`en.json`, `ko.json`)과 Google Sheets를 동기화합니다.
+
+```bash
+# Google Sheets에 번역 업로드
+npx i18n-upload
+
+# Google Sheets에서 번역 다운로드 (증분 업데이트 - 새로운 키만 추가)
+npx i18n-download
+
+# Google Sheets에서 번역 다운로드 (강제 덮어쓰기)
+npx i18n-download-force
+
+# 옵션으로 실행
+npx i18n-upload -s <spreadsheet-id> -c ./credentials.json
+npx i18n-download -s <spreadsheet-id> -c ./credentials.json
+```
+
+**특징:**
+
+- `i18nexus.config.json`에서 설정 자동 로드
+- `locales/en.json`, `locales/ko.json` 형식으로 저장
+- `i18n-download`: 기존 번역 유지, 새로운 키만 추가 (안전)
+- `i18n-download-force`: 모든 번역 덮어쓰기 (최신 상태로 동기화)
+- `i18n-upload`: 로컬의 새로운 키만 Google Sheets에 추가
+
+### 4. i18n-sheets - Google Sheets 연동 (레거시)
 
 Google Sheets를 통해 번역 관리를 쉽게 할 수 있습니다.
 

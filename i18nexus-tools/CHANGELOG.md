@@ -1,10 +1,67 @@
 # Changelog
 
+## [1.5.0] - 2025-01-16
+
+### 🎯 Major Features - Enhanced Translation Management
+
+#### Improved i18n-upload and i18n-download
+
+- **NEW**: `i18n-upload` now reads configuration from `i18nexus.config.json`
+- **NEW**: `i18n-download` now reads configuration from `i18nexus.config.json`
+- **NEW**: `i18n-download-force` command for force overwriting translations
+- **IMPROVED**: Both commands now work with `locales/en.json` and `locales/ko.json` format
+- **IMPROVED**: `i18n-download` now performs incremental updates (only adds new keys)
+- **IMPROVED**: Better file structure compatibility with modern i18n setups
+
+#### Smart Translation Syncing
+
+- **NEW**: Incremental download mode (default) - preserves existing translations
+- **NEW**: Force download mode (`i18n-download-force`) - overwrites all translations
+- **IMPROVED**: More efficient file operations
+- **IMPROVED**: Better conflict resolution
+
+### ✨ Enhancements
+
+#### File Structure
+
+- **CHANGED**: Translation files now saved as `locales/en.json`, `locales/ko.json` instead of nested structure
+- **IMPROVED**: Simpler file structure for better compatibility
+- **IMPROVED**: Automatic directory creation if not exists
+
+#### CLI Tools
+
+- **IMPROVED**: Better error messages for config reading
+- **IMPROVED**: Helpful usage instructions in all commands
+- **IMPROVED**: Consistent behavior across upload/download commands
+
+### 📝 Documentation
+
+- **IMPROVED**: README with new upload/download commands
+- **NEW**: Usage examples for incremental vs force download
+- **NEW**: Clear distinction between `i18n-download` and `i18n-download-force`
+
+### 🔧 Configuration
+
+All commands now automatically read from `i18nexus.config.json`:
+
+```json
+{
+  "languages": ["en", "ko"],
+  "localesDir": "./locales",
+  "googleSheets": {
+    "spreadsheetId": "your-spreadsheet-id",
+    "credentialsPath": "./credentials.json",
+    "sheetName": "Translations"
+  }
+}
+```
+
 ## [1.4.0] - 2025-01-15
 
 ### 🎯 Major Features - Type Safety
 
 #### TypeScript Configuration Support
+
 - **NEW**: `i18nexus.config.ts` support for TypeScript configuration files
 - **NEW**: Type inference for language codes with `as const`
 - **NEW**: `--typescript` flag for `i18n-sheets init` command
@@ -12,12 +69,14 @@
 - **NEW**: `translationImportSource` configuration option
 
 #### Enhanced CLI Tools
+
 - **IMPROVED**: `i18n-wrapper` now respects `translationImportSource` config
 - **IMPROVED**: `i18n-sheets init` can generate TypeScript config files
 - **IMPROVED**: Better error messages for config file issues
 - **IMPROVED**: Async config loading for better performance
 
 #### Custom Import Sources
+
 - **NEW**: `translationImportSource` configuration option
 - **NEW**: Customize where `i18n-wrapper` imports from
 - **NEW**: Default value: `"i18nexus"`
@@ -26,11 +85,13 @@
 ### ✨ Enhancements
 
 #### CLI Tools
+
 - **IMPROVED**: Better TypeScript definitions for all tools
 - **IMPROVED**: More precise type constraints for generic parameters
 - **IMPROVED**: Export config types for reusability
 
 #### Documentation
+
 - **IMPROVED**: README with type safety examples
 - **IMPROVED**: Better error messages and help text
 - **IMPROVED**: Examples with TypeScript configuration

@@ -3,6 +3,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { GoogleSheetsManager } from "../scripts/google-sheets";
+import { loadConfig } from "../scripts/config-loader";
 
 export interface UploadConfig {
   credentialsPath?: string;
@@ -67,8 +68,17 @@ export async function uploadTranslations(config: Partial<UploadConfig> = {}) {
 
 // CLI 실행 부분
 if (require.main === module) {
+  // i18nexus.config.json에서 설정 로드
+  const userConfig = loadConfig();
+
   const args = process.argv.slice(2);
-  const config: Partial<UploadConfig> = {};
+  const config: Partial<UploadConfig> = {
+    // config 파일에서 Google Sheets 설정 가져오기
+    credentialsPath: userConfig.googleSheets?.credentialsPath,
+    spreadsheetId: userConfig.googleSheets?.spreadsheetId,
+    localesDir: userConfig.localesDir,
+    sheetName: userConfig.googleSheets?.sheetName,
+  };
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
