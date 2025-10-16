@@ -7,7 +7,7 @@ import {
   LanguageManagerOptions,
 } from "../utils/languageManager";
 
-interface I18nContextType<TLanguage extends string = string> {
+export interface I18nContextType<TLanguage extends string = string> {
   currentLanguage: TLanguage;
   changeLanguage: (lang: TLanguage) => Promise<void>;
   availableLanguages: LanguageConfig[];
@@ -17,7 +17,19 @@ interface I18nContextType<TLanguage extends string = string> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const I18nContext = React.createContext<I18nContextType<any> | null>(null);
+export const I18nContext = React.createContext<I18nContextType<any> | null>(
+  null
+);
+
+export const useI18nContext = <
+  TLanguage extends string = string,
+>(): I18nContextType<TLanguage> => {
+  const context = React.useContext(I18nContext);
+  if (!context) {
+    throw new Error("useI18nContext must be used within an I18nProvider");
+  }
+  return context as I18nContextType<TLanguage>;
+};
 
 export interface I18nProviderProps<TLanguage extends string = string> {
   children: ReactNode;
@@ -126,13 +138,3 @@ export function I18nProvider<TLanguage extends string = string>({
     <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>
   );
 }
-
-export const useI18nContext = <
-  TLanguage extends string = string,
->(): I18nContextType<TLanguage> => {
-  const context = React.useContext(I18nContext);
-  if (!context) {
-    throw new Error("useI18nContext must be used within an I18nProvider");
-  }
-  return context as I18nContextType<TLanguage>;
-};

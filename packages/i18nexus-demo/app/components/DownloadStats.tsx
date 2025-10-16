@@ -112,9 +112,7 @@ export default function DownloadStats({
       className={`bg-slate-900 rounded-xl border ${colors.border} p-6 hover:border-${color}-500/50 transition-colors ${colors.shadow} hover:shadow-lg`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className={`text-sm font-medium ${colors.text}`}>
-            {displayName}
-          </p>
+          <p className={`text-sm font-medium ${colors.text}`}>{displayName}</p>
           <p className="text-3xl font-bold text-white mt-2">
             {stats ? formatNumber(stats.downloads) : "0"}
           </p>
@@ -124,10 +122,7 @@ export default function DownloadStats({
           <span className="text-white font-bold text-xl">📦</span>
         </div>
       </div>
-      <p className="text-xs text-slate-500 mt-3">
-        {t("Downloads last month")}
-      </p>
+      <p className="text-xs text-slate-500 mt-3">{t("Downloads last month")}</p>
     </div>
   );
 }
-
