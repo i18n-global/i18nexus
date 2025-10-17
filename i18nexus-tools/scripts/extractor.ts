@@ -44,8 +44,14 @@ export interface ExtractedKey {
 export class TranslationExtractor {
   private config: Required<ExtractorConfig>;
   private extractedKeys: Map<string, ExtractedKey> = new Map();
-  // 상수 저장: 변수명 -> AST Node
+  // 상수 저장: 변수명 -> AST Node (기존 로직 유지)
   private constants: Map<string, t.VariableDeclarator> = new Map();
+  // 상수 저장: 변수명 -> 렌더링 가능한 속성 값들 (추가)
+  private constantsWithValues: Map<string, Map<string, string[]>> = new Map();
+  // Import 매핑: 변수명 -> 파일 경로
+  private importedConstants: Map<string, string> = new Map();
+  // 분석된 외부 파일 캐시
+  private analyzedExternalFiles: Set<string> = new Set();
 
   constructor(config: Partial<ExtractorConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -71,7 +77,10 @@ export class TranslationExtractor {
         ],
       });
 
-      // Step 1: 먼저 상수 선언 수집
+      // Step 1: Import 문 파싱
+      this.parseImports(ast, filePath);
+
+      // Step 2: 로컬 상수 선언 수집
       traverse(ast, {
         VariableDeclaration: (path) => {
           if (path.node.kind === "const") {
@@ -84,7 +93,10 @@ export class TranslationExtractor {
         },
       });
 
-      // Step 2: t() 호출 추출
+      // Step 3: Import된 외부 파일 분석
+      this.analyzeImportedFiles();
+
+      // Step 4: t() 호출 추출
       traverse(ast, {
         CallExpression: (path) => {
           this.extractTranslationKey(path, filePath);
@@ -330,6 +342,119 @@ export class TranslationExtractor {
         identifier.name
       );
     }
+  }
+
+  /**
+   * Import 문에서 import된 변수와 파일 경로를 매핑
+   */
+  private parseImports(ast: t.File, currentFilePath: string): void {
+    traverse(ast, {
+      ImportDeclaration: (path) => {
+        const importPath = path.node.source.value;
+        
+        // 상대 경로만 처리
+        if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+          return;
+        }
+
+        // 절대 경로로 변환
+        const currentDir = pathLib.dirname(currentFilePath);
+        const absolutePath = this.resolveImportPath(importPath, currentDir);
+
+        // Import된 변수들 매핑
+        path.node.specifiers.forEach((specifier) => {
+          if (t.isImportSpecifier(specifier) && t.isIdentifier(specifier.imported)) {
+            const importedName = specifier.imported.name;
+            this.importedConstants.set(importedName, absolutePath);
+          } else if (t.isImportDefaultSpecifier(specifier)) {
+            const importedName = specifier.local.name;
+            this.importedConstants.set(importedName, absolutePath);
+          }
+        });
+      },
+    });
+  }
+
+  /**
+   * Import 경로를 절대 경로로 변환
+   */
+  private resolveImportPath(importPath: string, currentDir: string): string {
+    let resolvedPath = pathLib.resolve(currentDir, importPath);
+
+    // 확장자가 없으면 찾기
+    if (!pathLib.extname(resolvedPath)) {
+      const extensions = ['.ts', '.tsx', '.js', '.jsx'];
+      for (const ext of extensions) {
+        if (fs.existsSync(resolvedPath + ext)) {
+          return resolvedPath + ext;
+        }
+      }
+      // index 파일 체크
+      for (const ext of extensions) {
+        const indexPath = pathLib.join(resolvedPath, 'index' + ext);
+        if (fs.existsSync(indexPath)) {
+          return indexPath;
+        }
+      }
+    }
+
+    return resolvedPath;
+  }
+
+  /**
+   * 외부 파일에서 export된 상수 분석
+   */
+  private analyzeExternalFile(filePath: string): void {
+    if (this.analyzedExternalFiles.has(filePath) || !fs.existsSync(filePath)) {
+      return;
+    }
+
+    this.analyzedExternalFiles.add(filePath);
+
+    try {
+      const code = fs.readFileSync(filePath, 'utf-8');
+      const ast = parser.parse(code, {
+        sourceType: 'module',
+        plugins: ['jsx', 'typescript', 'decorators-legacy'],
+      });
+
+      // 외부 파일의 상수도 수집
+      traverse(ast, {
+        ExportNamedDeclaration: (path) => {
+          if (path.node.declaration && t.isVariableDeclaration(path.node.declaration)) {
+            if (path.node.declaration.kind === 'const') {
+              path.node.declaration.declarations.forEach((declarator) => {
+                if (t.isIdentifier(declarator.id)) {
+                  this.constants.set(declarator.id.name, declarator);
+                }
+              });
+            }
+          }
+        },
+        VariableDeclaration: (path) => {
+          // Export 안된 const도 수집
+          if (path.node.kind === 'const' && !t.isExportNamedDeclaration(path.parent)) {
+            path.node.declarations.forEach((declarator) => {
+              if (t.isIdentifier(declarator.id)) {
+                this.constants.set(declarator.id.name, declarator);
+              }
+            });
+          }
+        },
+      });
+    } catch (error) {
+      // 외부 파일 분석 실패는 무시
+    }
+  }
+
+  /**
+   * Import된 모든 외부 파일 분석
+   */
+  private analyzeImportedFiles(): void {
+    const filesToAnalyze = new Set(this.importedConstants.values());
+    filesToAnalyze.forEach((filePath) => {
+      this.analyzeExternalFile(filePath);
+    });
   }
 
   private isTFunction(callee: t.Expression | t.V8IntrinsicIdentifier): boolean {
