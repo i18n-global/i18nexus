@@ -9,6 +9,7 @@ export interface I18nexusConfig {
   localesDir: string;
   sourcePattern: string;
   translationImportSource: string;
+  constantPatterns?: string[]; // 상수 패턴 필터링
   googleSheets?: {
     spreadsheetId: string;
     credentialsPath: string;
@@ -22,6 +23,7 @@ const DEFAULT_CONFIG: I18nexusConfig = {
   localesDir: "./locales",
   sourcePattern: "src/**/*.{js,jsx,ts,tsx}",
   translationImportSource: "i18nexus",
+  constantPatterns: [], // 기본값: 모든 상수 허용
   googleSheets: {
     spreadsheetId: "",
     credentialsPath: "./credentials.json",

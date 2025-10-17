@@ -12,18 +12,29 @@ export interface ScriptConfig {
   sourcePattern?: string;
   translationImportSource?: string;
   dryRun?: boolean;
+  /**
+   * 상수로 인식할 네이밍 패턴 (접미사)
+   * 예: ['_ITEMS', '_MENU', '_CONFIG', '_FIELDS']
+   * 비어있으면 모든 ALL_CAPS/PascalCase를 상수로 인식
+   */
+  constantPatterns?: string[];
 }
 
 const DEFAULT_CONFIG: Required<ScriptConfig> = {
   sourcePattern: "src/**/*.{js,jsx,ts,tsx}",
   translationImportSource: "i18nexus",
   dryRun: false,
+  constantPatterns: [], // 기본값: 모든 상수 허용
 };
 
 export class TranslationWrapper {
   private config: Required<ScriptConfig>;
   // 상수 분석 결과 저장: 변수명 -> 렌더링 가능한 속성들
   private constantsWithRenderableProps: Map<string, Set<string>> = new Map();
+  // Import 매핑: 변수명 -> 파일 경로
+  private importedConstants: Map<string, string> = new Map();
+  // 분석된 외부 파일 캐시 (중복 분석 방지)
+  private analyzedExternalFiles: Set<string> = new Set();
 
   constructor(config: Partial<ScriptConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -74,7 +85,30 @@ export class TranslationWrapper {
    * 변수명이 상수 패턴인지 판단 (대문자 시작 또는 ALL_CAPS)
    * 외부 import된 상수를 감지하기 위한 휴리스틱
    */
+  /**
+   * 상수처럼 보이는 변수명인지 판단 (휴리스틱)
+   * config의 constantPatterns가 설정되어 있으면 해당 패턴만 허용
+   */
   private looksLikeConstant(varName: string): boolean {
+    // constantPatterns가 설정되어 있으면 패턴 체크
+    if (this.config.constantPatterns.length > 0) {
+      return this.config.constantPatterns.some((pattern) => {
+        // 접미사 패턴 (예: _ITEMS, _MENU)
+        if (pattern.startsWith("_")) {
+          return varName.endsWith(pattern);
+        }
+        // 접두사 패턴 (예: UI_, RENDER_)
+        else if (pattern.endsWith("_")) {
+          return varName.startsWith(pattern);
+        }
+        // 포함 패턴 (예: MENU, ITEMS)
+        else {
+          return varName.includes(pattern);
+        }
+      });
+    }
+
+    // constantPatterns가 비어있으면 기본 휴리스틱 사용
     // ALL_CAPS 패턴 (예: NAV_ITEMS, BUTTON_CONFIG)
     if (/^[A-Z][A-Z0-9_]*$/.test(varName)) {
       return true;
@@ -118,6 +152,75 @@ export class TranslationWrapper {
     return renderableKeywords.some((keyword) =>
       lowerPropName.includes(keyword)
     );
+  }
+
+  /**
+   * Import 문에서 import된 변수와 파일 경로를 매핑
+   */
+  private parseImports(ast: t.File, currentFilePath: string): void {
+    traverse(ast, {
+      ImportDeclaration: (path) => {
+        const importPath = path.node.source.value;
+
+        // 상대 경로만 처리 (외부 라이브러리 제외)
+        if (!importPath.startsWith(".") && !importPath.startsWith("/")) {
+          return;
+        }
+
+        // 절대 경로로 변환
+        const currentDir = this.getDirectoryPath(currentFilePath);
+        const absolutePath = this.resolveImportPath(importPath, currentDir);
+
+        // Import된 변수들 매핑
+        path.node.specifiers.forEach((specifier) => {
+          if (
+            t.isImportSpecifier(specifier) &&
+            t.isIdentifier(specifier.imported)
+          ) {
+            const importedName = specifier.imported.name;
+            this.importedConstants.set(importedName, absolutePath);
+          } else if (t.isImportDefaultSpecifier(specifier)) {
+            const importedName = specifier.local.name;
+            this.importedConstants.set(importedName, absolutePath);
+          }
+        });
+      },
+    });
+  }
+
+  /**
+   * Import 경로를 절대 경로로 변환
+   */
+  private resolveImportPath(importPath: string, currentDir: string): string {
+    // ./constants → /abs/path/constants.ts
+    // ../utils/constants → /abs/path/utils/constants.ts
+    let resolvedPath = path.resolve(currentDir, importPath);
+
+    // 확장자가 없으면 .ts, .tsx, .js, .jsx 순서로 찾기
+    if (!path.extname(resolvedPath)) {
+      const extensions = [".ts", ".tsx", ".js", ".jsx"];
+      for (const ext of extensions) {
+        if (fs.existsSync(resolvedPath + ext)) {
+          return resolvedPath + ext;
+        }
+      }
+      // index 파일 체크
+      for (const ext of extensions) {
+        const indexPath = path.join(resolvedPath, "index" + ext);
+        if (fs.existsSync(indexPath)) {
+          return indexPath;
+        }
+      }
+    }
+
+    return resolvedPath;
+  }
+
+  /**
+   * 파일 경로에서 디렉토리 경로 추출
+   */
+  private getDirectoryPath(filePath: string): string {
+    return path.dirname(filePath);
   }
 
   /**
@@ -255,6 +358,72 @@ export class TranslationWrapper {
   }
 
   /**
+   * 외부 파일에서 export된 상수 분석
+   */
+  private analyzeExternalFile(filePath: string): void {
+    // 이미 분석한 파일이면 스킵
+    if (this.analyzedExternalFiles.has(filePath)) {
+      return;
+    }
+
+    // 파일이 존재하지 않으면 스킵
+    if (!fs.existsSync(filePath)) {
+      return;
+    }
+
+    this.analyzedExternalFiles.add(filePath);
+
+    try {
+      const code = fs.readFileSync(filePath, "utf-8");
+      const ast = parser.parse(code, {
+        sourceType: "module",
+        plugins: ["jsx", "typescript", "decorators-legacy"],
+      });
+
+      traverse(ast, {
+        // export const NAV_ITEMS = [...] 형태
+        ExportNamedDeclaration: (path) => {
+          if (
+            path.node.declaration &&
+            t.isVariableDeclaration(path.node.declaration)
+          ) {
+            // VariableDeclaration 노드를 직접 분석
+            const varDeclPath = path.get(
+              "declaration"
+            ) as NodePath<t.VariableDeclaration>;
+            this.analyzeConstantDeclaration(varDeclPath);
+          }
+        },
+        // 일반 const 선언도 분석 (export 안된 것)
+        VariableDeclaration: (path) => {
+          // ExportNamedDeclaration 내부가 아닌 경우만
+          if (!t.isExportNamedDeclaration(path.parent)) {
+            this.analyzeConstantDeclaration(path);
+          }
+        },
+      });
+
+      console.log(`     📦 Analyzed external file: ${path.basename(filePath)}`);
+    } catch (error) {
+      console.warn(
+        `     ⚠️  Failed to analyze external file ${filePath}:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Import된 모든 외부 파일 분석
+   */
+  private analyzeImportedFiles(): void {
+    const filesToAnalyze = new Set(this.importedConstants.values());
+
+    filesToAnalyze.forEach((filePath) => {
+      this.analyzeExternalFile(filePath);
+    });
+  }
+
+  /**
    * 상수 선언을 분석하여 렌더링 가능한 속성을 찾음
    * 1 depth만 탐색, API 데이터는 제외
    */
@@ -277,6 +446,10 @@ export class TranslationWrapper {
       }
 
       const varName = declarator.id.name;
+
+      // 네이밍 패턴 체크 제거 - 한국어 유무로만 판단
+      // 소문자 변수도 한국어가 있으면 처리
+
       const renderableProps = new Set<string>();
 
       // 배열인 경우
@@ -424,18 +597,26 @@ export class TranslationWrapper {
             return;
           }
 
-          // 케이스 1: 직접 상수 접근 - BUTTON_CONFIG.title
+          // 케이스 1: 직접 상수 접근 - BUTTON_CONFIG.title 또는 users.name
           const constantProps =
             this.constantsWithRenderableProps.get(objectName);
 
-          if (constantProps && constantProps.has(propertyName)) {
-            // 직접 상수 접근
-            shouldWrap = true;
-            console.log(
-              `     ✅ Direct constant access: ${objectName}.${propertyName}`
-            );
+          if (constantProps) {
+            // 분석된 상수 - 속성이 있는지 확인
+            if (constantProps.has(propertyName)) {
+              shouldWrap = true;
+              console.log(
+                `     ✅ Analyzed constant access: ${objectName}.${propertyName}`
+              );
+            } else {
+              // 분석된 상수지만 해당 속성은 한국어 없음
+              console.log(
+                `     🚫 Analyzed constant but property not renderable: ${objectName}.${propertyName}`
+              );
+              return;
+            }
           }
-          // 외부 파일의 상수일 가능성 확인 (휴리스틱)
+          // 분석되지 않은 변수 - 외부 파일일 가능성 (휴리스틱 fallback)
           else if (
             this.looksLikeConstant(objectName) &&
             this.isRenderablePropertyName(propertyName)
@@ -503,17 +684,21 @@ export class TranslationWrapper {
                         sourceArrayProps ? Array.from(sourceArrayProps) : "none"
                       );
 
-                      // 소스 배열이 분석된 상수이고, 해당 속성이 한국어를 포함한 경우
-                      if (
-                        sourceArrayProps &&
-                        sourceArrayProps.has(propertyName)
-                      ) {
-                        shouldWrap = true;
-                        console.log(
-                          `     ✅ Array element access: ${sourceArray}[].${propertyName}`
-                        );
+                      if (sourceArrayProps) {
+                        // 분석된 배열 - 속성이 있는지 확인
+                        if (sourceArrayProps.has(propertyName)) {
+                          shouldWrap = true;
+                          console.log(
+                            `     ✅ Analyzed array element: ${sourceArray}[].${propertyName}`
+                          );
+                        } else {
+                          // 분석된 배열이지만 해당 속성은 한국어 없음
+                          console.log(
+                            `     🚫 Analyzed array but property not renderable: ${sourceArray}[].${propertyName}`
+                          );
+                        }
                       }
-                      // 외부 파일의 상수일 가능성 (휴리스틱)
+                      // 분석되지 않은 배열 - 외부 파일일 가능성 (휴리스틱 fallback)
                       else if (
                         this.looksLikeConstant(sourceArray) &&
                         this.isRenderablePropertyName(propertyName)
@@ -524,7 +709,7 @@ export class TranslationWrapper {
                         );
                       } else {
                         console.log(
-                          `     ❌ Property ${propertyName} not found in ${sourceArray} or not Korean`
+                          `     ❌ ${sourceArray} not analyzed and not matching heuristic`
                         );
                       }
                     }
@@ -618,13 +803,20 @@ export class TranslationWrapper {
           plugins: ["jsx", "typescript", "decorators-legacy"],
         });
 
-        // Step 1: 먼저 상수 선언들을 분석
+        // Step 1: Import 문 파싱
+        this.importedConstants.clear();
+        this.parseImports(ast, filePath);
+
+        // Step 2: 로컬 상수 선언 분석
         this.constantsWithRenderableProps.clear();
         traverse(ast, {
           VariableDeclaration: (path) => {
             this.analyzeConstantDeclaration(path);
           },
         });
+
+        // Step 3: Import된 외부 파일 분석
+        this.analyzeImportedFiles();
 
         // 분석 결과 로깅
         if (this.constantsWithRenderableProps.size > 0) {
@@ -640,7 +832,7 @@ export class TranslationWrapper {
 
         const modifiedComponentPaths: NodePath<t.Function>[] = [];
 
-        // Step 2: 컴포넌트 내부 처리
+        // Step 4: 컴포넌트 내부 처리
         traverse(ast, {
           FunctionDeclaration: (path) => {
             const componentName = path.node.id?.name;
