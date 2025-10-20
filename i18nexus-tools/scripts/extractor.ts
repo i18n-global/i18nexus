@@ -351,9 +351,9 @@ export class TranslationExtractor {
     traverse(ast, {
       ImportDeclaration: (path) => {
         const importPath = path.node.source.value;
-        
+
         // 상대 경로만 처리
-        if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+        if (!importPath.startsWith(".") && !importPath.startsWith("/")) {
           return;
         }
 
@@ -363,7 +363,10 @@ export class TranslationExtractor {
 
         // Import된 변수들 매핑
         path.node.specifiers.forEach((specifier) => {
-          if (t.isImportSpecifier(specifier) && t.isIdentifier(specifier.imported)) {
+          if (
+            t.isImportSpecifier(specifier) &&
+            t.isIdentifier(specifier.imported)
+          ) {
             const importedName = specifier.imported.name;
             this.importedConstants.set(importedName, absolutePath);
           } else if (t.isImportDefaultSpecifier(specifier)) {
@@ -383,7 +386,7 @@ export class TranslationExtractor {
 
     // 확장자가 없으면 찾기
     if (!pathLib.extname(resolvedPath)) {
-      const extensions = ['.ts', '.tsx', '.js', '.jsx'];
+      const extensions = [".ts", ".tsx", ".js", ".jsx"];
       for (const ext of extensions) {
         if (fs.existsSync(resolvedPath + ext)) {
           return resolvedPath + ext;
@@ -391,7 +394,7 @@ export class TranslationExtractor {
       }
       // index 파일 체크
       for (const ext of extensions) {
-        const indexPath = pathLib.join(resolvedPath, 'index' + ext);
+        const indexPath = pathLib.join(resolvedPath, "index" + ext);
         if (fs.existsSync(indexPath)) {
           return indexPath;
         }
@@ -412,17 +415,20 @@ export class TranslationExtractor {
     this.analyzedExternalFiles.add(filePath);
 
     try {
-      const code = fs.readFileSync(filePath, 'utf-8');
+      const code = fs.readFileSync(filePath, "utf-8");
       const ast = parser.parse(code, {
-        sourceType: 'module',
-        plugins: ['jsx', 'typescript', 'decorators-legacy'],
+        sourceType: "module",
+        plugins: ["jsx", "typescript", "decorators-legacy"],
       });
 
       // 외부 파일의 상수도 수집
       traverse(ast, {
         ExportNamedDeclaration: (path) => {
-          if (path.node.declaration && t.isVariableDeclaration(path.node.declaration)) {
-            if (path.node.declaration.kind === 'const') {
+          if (
+            path.node.declaration &&
+            t.isVariableDeclaration(path.node.declaration)
+          ) {
+            if (path.node.declaration.kind === "const") {
               path.node.declaration.declarations.forEach((declarator) => {
                 if (t.isIdentifier(declarator.id)) {
                   this.constants.set(declarator.id.name, declarator);
@@ -433,7 +439,10 @@ export class TranslationExtractor {
         },
         VariableDeclaration: (path) => {
           // Export 안된 const도 수집
-          if (path.node.kind === 'const' && !t.isExportNamedDeclaration(path.parent)) {
+          if (
+            path.node.kind === "const" &&
+            !t.isExportNamedDeclaration(path.parent)
+          ) {
             path.node.declarations.forEach((declarator) => {
               if (t.isIdentifier(declarator.id)) {
                 this.constants.set(declarator.id.name, declarator);

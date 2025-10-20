@@ -5,7 +5,50 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { loadConfigSilently } from "../scripts/config-loader";
+
+// Minimal config shape used by server utilities
+type LocalConfig = {
+  localesDir?: string;
+  defaultLanguage?: string;
+};
+
+/**
+ * Attempt to load i18nexus config silently from the project root.
+ * This is a lightweight replacement for the removed `scripts/config-loader`.
+ * Returns parsed config object or null if not found or invalid.
+ */
+async function loadConfigSilently(): Promise<LocalConfig | null> {
+  try {
+    const configPath = path.resolve(process.cwd(), "i18nexus.config.json");
+    if (fs.existsSync(configPath)) {
+      const raw = await fs.promises.readFile(configPath, "utf8");
+      try {
+        return JSON.parse(raw) as LocalConfig;
+      } catch {
+        // invalid JSON
+        return null;
+      }
+    }
+
+    // try package-level config file (optional)
+    const altPath = path.resolve(process.cwd(), "i18nexus.config.js");
+    if (fs.existsSync(altPath)) {
+      // attempt to dynamically import it (works in ESM)
+      try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore dynamic import
+        const mod = await import(altPath);
+        return mod && mod.default ? (mod.default as LocalConfig) : (mod as LocalConfig);
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Get language from cookies in Next.js App Router Server Components

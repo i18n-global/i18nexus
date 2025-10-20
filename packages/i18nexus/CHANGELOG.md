@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.5.0] - 2025-01-15
 
+## [2.5.2] - 2025-10-20
+
+### 🛠 Developer Tools
+
+- **NEW**: `I18NexusDevtools` — React Query-style devtools for inspecting and switching languages in development.
+- **NEW**: Devtools shows current language, browser language, available languages, translation stats, and provides quick actions (switch, reset).
+
+### ✨ Enhancements
+
+- Updated `useTranslation` with stricter type guards and styled interpolation.
+
+### 🐛 Fixes
+
+- Removed unused scripts references and provided safe fallbacks for config loading.
+
+
 ### 🎯 Major Features - Type Safety
 
 #### TypeScript Configuration Support

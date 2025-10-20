@@ -20,7 +20,8 @@ const LOCAL_KOREAN_ITEMS = [
 { path: "/settings", label: "설정" }];
 
 
-export default function ExceptionTestComponent() {const { t } = useTranslation();
+export default function ExceptionTestComponent() {
+  const { t } = useTranslation();
   return (
     <div>
       <h1>{t("예외 케이스 테스트")}</h1>

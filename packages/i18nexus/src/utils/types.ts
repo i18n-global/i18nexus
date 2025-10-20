@@ -2,7 +2,17 @@
  * Type utilities for i18nexus
  */
 
-import type { I18nexusConfig } from "../scripts/config-loader";
+/**
+ * Minimal I18nexus config type used by the library's helpers.
+ * Keep this minimal to avoid coupling to external loader implementations.
+ */
+export interface I18nexusConfig<TLanguages extends readonly string[] = readonly string[]> {
+  languages: TLanguages;
+  defaultLanguage: TLanguages[number];
+  localesDir?: string;
+  sourcePattern?: string;
+  translationImportSource?: string;
+}
 
 /**
  * Extract language union type from config
