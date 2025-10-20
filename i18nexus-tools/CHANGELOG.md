@@ -58,6 +58,16 @@ All commands now automatically read from `i18nexus.config.json`:
 
 ## [1.4.0] - 2025-01-15
 
+## [1.5.1] - 2025-10-20
+
+### 🎯 Patch - AST-based constant handling
+
+- **FIX/FEATURE**: `i18n-wrapper` now detects top-level `const` arrays/objects (including those imported from other files) and wraps JSX usages like `{item.label}` with `t(...)` when the underlying constant contains Korean strings (1-depth analysis). This avoids mutating runtime constants and wraps at usage sites.
+- **FIX/FEATURE**: `i18n-extractor` can now trace `t(item.prop)` back to constants (internal and external) and extract literal Korean values into `locales/*.json`.
+- **IMPROVED**: Excludes dynamic data sources (API, props, useState, function params) from automatic wrapping.
+- **NEW**: `constantPatterns` config option to customize variable name heuristics for constants (e.g., uppercase, suffix/prefix matching).
+
+
 ### 🎯 Major Features - Type Safety
 
 #### TypeScript Configuration Support
