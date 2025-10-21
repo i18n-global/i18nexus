@@ -157,10 +157,12 @@ export class GoogleSheetsManager {
    * 로컬 번역 파일들을 읽어서 Google Sheets에 업로드
    * @param localesDir 로컬 번역 파일 디렉토리
    * @param autoTranslate true일 경우 영어는 GOOGLETRANSLATE 수식으로 업로드
+   * @param force true일 경우 기존 데이터를 모두 지우고 새로 업로드
    */
   async uploadTranslations(
     localesDir: string,
-    autoTranslate: boolean = false
+    autoTranslate: boolean = false,
+    force: boolean = false
   ): Promise<void> {
     if (!this.sheets) {
       throw new Error(
@@ -175,10 +177,9 @@ export class GoogleSheetsManager {
           "🤖 Auto-translate mode: English will use GOOGLETRANSLATE formula"
         );
       }
-
-      // 기존 데이터 읽기
-      const existingData = await this.downloadTranslations();
-      const existingKeys = new Set(existingData.map((row) => row.key));
+      if (force) {
+        console.log("💪 Force mode: Overwriting all existing data");
+      }
 
       // 로컬 번역 파일들 읽기
       const translations = await this.readLocalTranslations(localesDir);
@@ -188,31 +189,47 @@ export class GoogleSheetsManager {
         return;
       }
 
-      // 새로운 키만 필터링
-      const newTranslations = translations.filter(
-        (t) => !existingKeys.has(t.key)
-      );
+      let translationsToUpload: TranslationRow[];
 
-      if (newTranslations.length === 0) {
-        console.log("📝 No new translations to upload");
-        return;
+      if (force) {
+        // Force 모드: 모든 키 업로드
+        translationsToUpload = translations;
+        
+        // 기존 데이터 모두 삭제 (헤더 제외)
+        const existingData = await this.downloadTranslations();
+        if (existingData.length > 0) {
+          const deleteRange = `${this.config.sheetName}!A${this.config.headerRow + 1}:C${
+            existingData.length + this.config.headerRow
+          }`;
+          await this.sheets.spreadsheets.values.clear({
+            spreadsheetId: this.config.spreadsheetId,
+            range: deleteRange,
+          });
+          console.log(`�️  Cleared ${existingData.length} existing rows`);
+        }
+      } else {
+        // 일반 모드: 새로운 키만 업로드
+        const existingData = await this.downloadTranslations();
+        const existingKeys = new Set(existingData.map((row) => row.key));
+
+        translationsToUpload = translations.filter(
+          (t) => !existingKeys.has(t.key)
+        );
+
+        if (translationsToUpload.length === 0) {
+          console.log("📝 No new translations to upload");
+          return;
+        }
       }
 
-      // 마지막 행 찾기
-      const lastRow = Math.max(
-        this.config.headerRow,
-        existingData.length + this.config.headerRow
-      );
-      const startRow = lastRow + 1;
+      // 시작 행 계산
+      const startRow = this.config.headerRow + 1;
 
       // 데이터 준비
-      const values = newTranslations.map((translation, index) => {
+      const values = translationsToUpload.map((translation, index) => {
         const currentRow = startRow + index;
         const key = translation.key;
         const korean = translation.ko || "";
-        // autoTranslate가 true일 때,
-        // 로컬의 영어 값(translation.en)이 비어있으면 수식을 사용하고,
-        // 비어있지 않으면(이미 값이 있으면) 그 값을 그대로 사용
         const localEnglishValue = translation.en || "";
 
         const english = autoTranslate
@@ -238,7 +255,7 @@ export class GoogleSheetsManager {
       });
 
       console.log(
-        `✅ Uploaded ${newTranslations.length} new translations to Google Sheets`
+        `✅ Uploaded ${translationsToUpload.length} translations to Google Sheets`
       );
       if (autoTranslate) {
         console.log(

@@ -22,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed unused scripts references and provided safe fallbacks for config loading.
 
-
 ### 🎯 Major Features - Type Safety
 
 #### TypeScript Configuration Support

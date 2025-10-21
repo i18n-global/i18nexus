@@ -18,6 +18,7 @@ export interface ExtractorConfig {
   dryRun?: boolean;
   outputFormat?: "json" | "csv";
   languages?: string[]; // 언어 목록 추가
+  force?: boolean; // force 모드: 기존 값을 덮어씀
 }
 
 const DEFAULT_CONFIG: Required<ExtractorConfig> = {
@@ -31,6 +32,7 @@ const DEFAULT_CONFIG: Required<ExtractorConfig> = {
   dryRun: false,
   outputFormat: "json",
   languages: ["en", "ko"], // 기본 언어
+  force: false, // 기본값: 기존 번역 유지
 };
 
 export interface ExtractedKey {
@@ -623,25 +625,52 @@ ${exportObj}
           }
         }
 
-        // 새로운 키 병합
-        const mergedTranslations = { ...existingTranslations };
+        let mergedTranslations: { [key: string]: string };
 
-        Object.keys(data).forEach((key) => {
-          if (lang === "ko") {
-            // 한국어는 키를 그대로 또는 defaultValue 사용
-            mergedTranslations[key] = data[key] || key;
-          } else if (lang === "en") {
-            // 영어는 기존 번역이 있으면 유지, 없으면 빈 문자열
-            if (!mergedTranslations[key]) {
+        if (this.config.force) {
+          // Force 모드: 기존 값을 모두 덮어씀
+          console.log(`🔄 Force mode: Overwriting all translations in ${langFile}`);
+          mergedTranslations = {};
+          
+          Object.keys(data).forEach((key) => {
+            if (lang === "ko") {
+              // 한국어는 키를 그대로 또는 defaultValue 사용
+              mergedTranslations[key] = data[key] || key;
+            } else if (lang === "en") {
+              // 영어는 빈 문자열
+              mergedTranslations[key] = "";
+            } else {
+              // 기타 언어도 빈 문자열
               mergedTranslations[key] = "";
             }
+          });
+        } else {
+          // 기본 모드: 기존 번역을 유지하고 새로운 키만 추가
+          mergedTranslations = { ...existingTranslations };
+
+          let newKeysCount = 0;
+          Object.keys(data).forEach((key) => {
+            if (!mergedTranslations.hasOwnProperty(key)) {
+              newKeysCount++;
+              if (lang === "ko") {
+                // 한국어는 키를 그대로 또는 defaultValue 사용
+                mergedTranslations[key] = data[key] || key;
+              } else if (lang === "en") {
+                // 영어는 빈 문자열
+                mergedTranslations[key] = "";
+              } else {
+                // 기타 언어도 빈 문자열
+                mergedTranslations[key] = "";
+              }
+            }
+          });
+
+          if (newKeysCount > 0) {
+            console.log(`➕ Added ${newKeysCount} new keys to ${langFile}`);
           } else {
-            // 기타 언어도 기존 번역 유지, 없으면 빈 문자열
-            if (!mergedTranslations[key]) {
-              mergedTranslations[key] = "";
-            }
+            console.log(`✓ No new keys to add to ${langFile}`);
           }
-        });
+        }
 
         const content = JSON.stringify(mergedTranslations, null, 2);
 

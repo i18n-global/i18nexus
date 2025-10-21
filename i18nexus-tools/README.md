@@ -83,10 +83,10 @@ export default function Example() {
     <div>
       {/* 일반 텍스트 - 래핑됨 */}
       <h1>안녕하세요</h1>
-      
+
       {/* i18n-ignore */}
       <p>이것은 무시됩니다</p>
-      
+
       {/* i18n-ignore */}
       <span>{"이것도 무시됩니다"}</span>
     </div>
@@ -98,7 +98,7 @@ const CONFIG = {
   // i18n-ignore
   apiKey: "한글로 된 API 키",
   // 일반 케이스 - 래핑됨
-  message: "환영합니다"
+  message: "환영합니다",
 };
 ```
 
@@ -107,8 +107,11 @@ const CONFIG = {
 `t()` 함수 호출에서 번역 키를 추출하여 en.json과 ko.json 파일을 생성/업데이트합니다.
 
 ```bash
-# 기본 사용법 - locales/en.json, locales/ko.json에 추출
+# 기본 사용법 - 새로운 키만 추가 (기존 번역 유지)
 npx i18n-extractor
+
+# Force 모드 - 모든 키를 덮어쓰기
+npx i18n-extractor --force
 
 # 커스텀 패턴과 출력 디렉토리
 npx i18n-extractor -p "app/**/*.tsx" -d "./public/locales"
@@ -123,10 +126,23 @@ npx i18n-extractor --dry-run
 **특징:**
 
 - t() 함수 호출에서 번역 키 자동 추출
-- **en.json과 ko.json 파일에 자동 병합** (기존 번역 유지)
+- **기본 모드: 기존 번역을 유지하고 새로운 키만 추가** (안전한 업데이트)
+- **--force 옵션: 모든 번역을 새로 추출된 값으로 덮어씀** (완전 재생성)
 - JSON: i18n-core 호환 형식 출력
 - CSV: 구글 시트 호환 형식 출력 (Key, English, Korean)
 - 중복 키 감지 및 보고
+
+**사용 시나리오:**
+
+- **기본 모드 (권장)**: 일상적인 개발 중 새로운 t() 호출 추가 시
+  - 기존에 작성한 번역이 유지됨
+  - 새로 추가된 키만 locale 파일에 추가
+  - 안전하고 비파괴적인 업데이트
+  
+- **Force 모드**: 번역 파일 전체를 재생성해야 할 때
+  - 코드에서 추출된 키로 완전히 새로 생성
+  - 기존 번역이 모두 초기화됨 (주의 필요)
+  - 프로젝트 구조 변경이나 대규모 리팩토링 후 사용
 
 ### 3. i18n-clean-legacy - 사용하지 않는 번역 키 정리
 
@@ -158,7 +174,7 @@ npx i18n-clean-legacy --no-backup
 **제거 대상:**
 
 - 코드에서 사용하지 않는 키 (locale에만 존재)
-- 값이 "_N/A", "N/A", "" 등인 잘못된 키
+- 값이 "\_N/A", "N/A", "" 등인 잘못된 키
 - null/undefined 값을 가진 키
 
 ### 4. i18n-upload / i18n-download - Google Sheets 업로드/다운로드
@@ -166,11 +182,17 @@ npx i18n-clean-legacy --no-backup
 로컬 번역 파일(`en.json`, `ko.json`)과 Google Sheets를 동기화합니다.
 
 ```bash
-# Google Sheets에 번역 업로드 (기본 모드 - 텍스트만)
+# Google Sheets에 번역 업로드 (기본 모드 - 새로운 키만 추가)
 npx i18n-upload
+
+# Google Sheets에 번역 업로드 (Force 모드 - 모든 데이터 덮어쓰기)
+npx i18n-upload --force
 
 # Google Sheets에 번역 업로드 (자동번역 모드 - 영어는 GOOGLETRANSLATE 수식으로)
 npx i18n-upload --auto-translate
+
+# Google Sheets에 번역 업로드 (Force + 자동번역)
+npx i18n-upload --force --auto-translate
 
 # Google Sheets에서 번역 다운로드 (증분 업데이트 - 새로운 키만 추가)
 npx i18n-download
@@ -180,7 +202,7 @@ npx i18n-download-force
 
 # 옵션으로 실행
 npx i18n-upload -s <spreadsheet-id> -c ./credentials.json
-npx i18n-upload -s <spreadsheet-id> -c ./credentials.json --auto-translate
+npx i18n-upload -s <spreadsheet-id> -c ./credentials.json --force --auto-translate
 npx i18n-download -s <spreadsheet-id> -c ./credentials.json
 ```
 
@@ -188,10 +210,15 @@ npx i18n-download -s <spreadsheet-id> -c ./credentials.json
 
 - `i18nexus.config.json`에서 설정 자동 로드
 - `locales/en.json`, `locales/ko.json` 형식으로 저장
-- `i18n-download`: 기존 번역 유지, 새로운 키만 추가 (안전)
-- `i18n-download-force`: 모든 번역 덮어쓰기 (최신 상태로 동기화)
-- `i18n-upload`: 로컬의 새로운 키만 Google Sheets에 추가
-- `i18n-upload --auto-translate`: 한국어는 텍스트, 영어는 자동번역 수식으로 업로드
+
+**업로드 모드:**
+- **기본 모드**: 로컬의 새로운 키만 Google Sheets에 추가 (기존 시트 데이터 유지)
+- **Force 모드 (--force)**: 기존 시트 데이터를 모두 지우고 로컬 번역 전체를 새로 업로드
+- **자동번역 모드 (--auto-translate)**: 한국어는 텍스트, 영어는 자동번역 수식으로 업로드
+
+**다운로드 모드:**
+- **i18n-download**: 기존 번역 유지, 새로운 키만 추가 (안전)
+- **i18n-download-force**: 모든 번역 덮어쓰기 (최신 상태로 동기화)
 
 **자동번역 모드 (--auto-translate):**
 
@@ -201,6 +228,12 @@ npx i18n-download -s <spreadsheet-id> -c ./credentials.json
 - 영어(en.json): `=GOOGLETRANSLATE(C2, "ko", "en")` 수식으로 업로드
 - Google Sheets가 자동으로 번역을 실행하여 영어 셀을 채웁니다
 - `i18n-download` 시 수식이 아닌 계산된 번역 결과를 가져옵니다
+
+**Force 모드 사용 시나리오:**
+
+- 로컬 번역 파일이 신뢰할 수 있는 소스일 때
+- Google Sheets가 오염되어 완전히 재동기화가 필요할 때
+- 대규모 리팩토링 후 전체 번역을 새로 업로드할 때
 
 ### 4. i18n-sheets - Google Sheets 연동 (레거시)
 
@@ -420,6 +453,7 @@ npx i18n-extractor -p "src/**/*.tsx" -d "./locales"
 | `-o, --output`     | 출력 파일명                  | `"extracted-translations.json"` |
 | `-d, --output-dir` | 출력 디렉토리                | `"./locales"`                   |
 | `-f, --format`     | 출력 형식 (json/csv)         | `"json"`                        |
+| `--force`          | Force 모드 (기존 번역 덮어씀) | `false` (새 키만 추가)           |
 | `--dry-run`        | 실제 파일 생성 없이 미리보기 | -                               |
 | `-h, --help`       | 도움말 표시                  | -                               |
 

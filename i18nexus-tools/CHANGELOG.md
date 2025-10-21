@@ -1,4 +1,71 @@
+````markdown
 # Changelog
+
+## [1.5.5] - 2025-01-21
+
+### 🎯 Feature - Force Mode for Upload & Extractor
+
+#### Enhanced i18n-extractor
+
+- **CHANGED**: Default behavior now preserves existing translations and only adds new keys (non-destructive)
+- **NEW**: `--force` flag to overwrite all translations with newly extracted values
+- **IMPROVED**: Console output shows number of new keys added in default mode
+- **IMPROVED**: Clear distinction between incremental updates and full regeneration
+
+**Default Mode (Recommended):**
+```bash
+# Safe incremental update - preserves existing translations
+i18n-extractor
+```
+
+**Force Mode (Use with caution):**
+```bash
+# Complete regeneration - overwrites all translations
+i18n-extractor --force
+```
+
+#### Enhanced i18n-upload
+
+- **CHANGED**: Default behavior now only uploads new keys to Google Sheets (preserves existing data)
+- **NEW**: `--force` flag to clear all Google Sheets data and re-upload everything
+- **IMPROVED**: Force mode clears rows while preserving headers
+- **IMPROVED**: Better console output showing upload mode
+
+**Default Mode (Recommended):**
+```bash
+# Incremental upload - only adds new keys
+i18n-upload
+```
+
+**Force Mode (Use with caution):**
+```bash
+# Complete sync - clears and re-uploads all data
+i18n-upload --force
+
+# Can combine with auto-translate
+i18n-upload --force --auto-translate
+```
+
+### 📝 Use Cases
+
+**Incremental Development (Default Mode):**
+- Daily development: new features add new translation keys
+- Preserves all existing translations
+- Safe and non-destructive
+- Ideal for team collaboration
+
+**Complete Regeneration (Force Mode):**
+- After major refactoring or restructuring
+- When local files are the source of truth
+- When Google Sheets data is corrupted or needs reset
+- Initial project setup or migration
+
+### ✨ Benefits
+
+- **Safer default behavior**: No accidental data loss
+- **Clear intentions**: Force mode explicitly signals destructive operation
+- **Better workflow**: Matches real-world development patterns
+- **Consistent API**: Both extractor and upload use same force concept
 
 ## [1.5.0] - 2025-01-16
 
@@ -69,7 +136,7 @@ All commands now automatically read from `i18nexus.config.json`:
 - **NEW**: `i18n-clean-legacy` command to remove unused and invalid translation keys
 - Analyzes source code using extractor logic to find actively used keys
 - Compares with locale files and removes unused keys
-- Removes keys with invalid values ("_N/A", "N/A", "", null, undefined)
+- Removes keys with invalid values ("\_N/A", "N/A", "", null, undefined)
 - Reports missing keys (used in code but not in locale)
 - Creates timestamped backup files before modifications
 - Supports dry-run mode to preview changes
@@ -100,10 +167,12 @@ i18n-clean-legacy --no-backup
 
 ```tsx
 // i18n-ignore
-<p>This will not be wrapped with t()</p>
+<p>This will not be wrapped with t()</p>;
 
-{/* i18n-ignore */}
-<span>Also ignored</span>
+{
+  /* i18n-ignore */
+}
+<span>Also ignored</span>;
 ```
 
 ## [1.5.2] - 2025-01-21
@@ -121,8 +190,10 @@ i18n-clean-legacy --no-backup
 Add `i18n-ignore` comment immediately before the code you want to exclude:
 
 ```tsx
-{/* i18n-ignore */}
-<p>This won't be wrapped</p>
+{
+  /* i18n-ignore */
+}
+<p>This won't be wrapped</p>;
 
 // i18n-ignore
 const apiKey = "한글 API 키";

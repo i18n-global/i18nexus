@@ -6,7 +6,9 @@
  * Minimal I18nexus config type used by the library's helpers.
  * Keep this minimal to avoid coupling to external loader implementations.
  */
-export interface I18nexusConfig<TLanguages extends readonly string[] = readonly string[]> {
+export interface I18nexusConfig<
+  TLanguages extends readonly string[] = readonly string[],
+> {
   languages: TLanguages;
   defaultLanguage: TLanguages[number];
   localesDir?: string;

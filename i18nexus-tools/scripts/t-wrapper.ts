@@ -60,7 +60,7 @@ export class TranslationWrapper {
    */
   private hasIgnoreComment(path: NodePath, sourceCode?: string): boolean {
     const node = path.node;
-    
+
     // 1. AST의 leadingComments 확인
     if (node.leadingComments) {
       const hasIgnore = node.leadingComments.some(
@@ -84,17 +84,18 @@ export class TranslationWrapper {
     // 3. 소스코드 직접 검사 (node.loc가 있는 경우)
     if (sourceCode && node.loc) {
       const startLine = node.loc.start.line;
-      const lines = sourceCode.split('\n');
-      
+      const lines = sourceCode.split("\n");
+
       // 현재 라인과 바로 위 라인 검사
       for (let i = Math.max(0, startLine - 3); i < startLine; i++) {
         const line = lines[i];
-        if (line && (
-          line.includes('i18n-ignore') ||
-          line.includes('// i18n-ignore') ||
-          line.includes('/* i18n-ignore') ||
-          line.includes('{/* i18n-ignore')
-        )) {
+        if (
+          line &&
+          (line.includes("i18n-ignore") ||
+            line.includes("// i18n-ignore") ||
+            line.includes("/* i18n-ignore") ||
+            line.includes("{/* i18n-ignore"))
+        ) {
           return true;
         }
       }
@@ -573,12 +574,18 @@ export class TranslationWrapper {
     });
   }
 
-  private processFunctionBody(path: NodePath<t.Function>, sourceCode: string): boolean {
+  private processFunctionBody(
+    path: NodePath<t.Function>,
+    sourceCode: string
+  ): boolean {
     let wasModified = false;
 
     path.traverse({
       StringLiteral: (subPath) => {
-        if (this.shouldSkipPath(subPath) || this.hasIgnoreComment(subPath, sourceCode)) {
+        if (
+          this.shouldSkipPath(subPath) ||
+          this.hasIgnoreComment(subPath, sourceCode)
+        ) {
           return;
         }
 

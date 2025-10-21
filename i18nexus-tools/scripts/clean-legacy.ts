@@ -82,10 +82,7 @@ export class LegacyCleaner {
   /**
    * JSON 파일 쓰기
    */
-  private writeJsonFile(
-    filePath: string,
-    data: Record<string, string>
-  ): void {
+  private writeJsonFile(filePath: string, data: Record<string, string>): void {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -158,7 +155,10 @@ export class LegacyCleaner {
     // 기준 언어 (첫 번째 언어, 보통 ko)
     const primaryLang = this.config.languages[0];
     const primaryData = localeData.get(primaryLang) || {};
-    stats.totalKeysPerLanguage.set(primaryLang, Object.keys(primaryData).length);
+    stats.totalKeysPerLanguage.set(
+      primaryLang,
+      Object.keys(primaryData).length
+    );
 
     const cleanedData: Map<string, Record<string, string>> = new Map();
     this.config.languages.forEach((lang) => {
@@ -230,7 +230,9 @@ export class LegacyCleaner {
     console.log(`  • Keys used in code: ${stats.totalUsedInCode}`);
     console.log(`  • Keys kept: ${stats.keptKeys}`);
     console.log(`  • Keys removed (unused): ${stats.removedUnused}`);
-    console.log(`  • Keys removed (invalid value): ${stats.removedInvalidValue}`);
+    console.log(
+      `  • Keys removed (invalid value): ${stats.removedInvalidValue}`
+    );
     console.log(`  • Keys missing from locale: ${stats.missingKeys}`);
 
     if (issues.missingKeys.length > 0) {

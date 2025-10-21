@@ -38,7 +38,9 @@ async function loadConfigSilently(): Promise<LocalConfig | null> {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore dynamic import
         const mod = await import(altPath);
-        return mod && mod.default ? (mod.default as LocalConfig) : (mod as LocalConfig);
+        return mod && mod.default
+          ? (mod.default as LocalConfig)
+          : (mod as LocalConfig);
       } catch {
         return null;
       }
