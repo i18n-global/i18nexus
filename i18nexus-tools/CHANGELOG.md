@@ -1,6 +1,27 @@
 ````markdown
 # Changelog
 
+## [1.5.6] - 2025-01-21
+
+### 🐛 Bug Fix - Wrapper Empty String Filter
+
+#### i18n-wrapper
+
+- **FIX**: Wrapper now skips empty strings ("") and whitespace-only strings
+- **IMPROVED**: Better filtering to avoid wrapping meaningless strings
+
+**Before:**
+```tsx
+const value = ""; // Would be wrapped with t("")
+const space = "   "; // Would be wrapped with t("   ")
+```
+
+**After:**
+```tsx
+const value = ""; // Skipped (empty string)
+const space = "   "; // Skipped (whitespace only)
+```
+
 ## [1.5.5] - 2025-01-21
 
 ### 🎯 Feature - Force Mode for Upload & Extractor
@@ -13,12 +34,14 @@
 - **IMPROVED**: Clear distinction between incremental updates and full regeneration
 
 **Default Mode (Recommended):**
+
 ```bash
 # Safe incremental update - preserves existing translations
 i18n-extractor
 ```
 
 **Force Mode (Use with caution):**
+
 ```bash
 # Complete regeneration - overwrites all translations
 i18n-extractor --force
@@ -32,12 +55,14 @@ i18n-extractor --force
 - **IMPROVED**: Better console output showing upload mode
 
 **Default Mode (Recommended):**
+
 ```bash
 # Incremental upload - only adds new keys
 i18n-upload
 ```
 
 **Force Mode (Use with caution):**
+
 ```bash
 # Complete sync - clears and re-uploads all data
 i18n-upload --force
@@ -49,12 +74,14 @@ i18n-upload --force --auto-translate
 ### 📝 Use Cases
 
 **Incremental Development (Default Mode):**
+
 - Daily development: new features add new translation keys
 - Preserves all existing translations
 - Safe and non-destructive
 - Ideal for team collaboration
 
 **Complete Regeneration (Force Mode):**
+
 - After major refactoring or restructuring
 - When local files are the source of truth
 - When Google Sheets data is corrupted or needs reset
@@ -476,3 +503,4 @@ i18n-wrapper -p "app/**/*.tsx"
   - Complete workflow guides
 - Added inline code documentation
 - Improved help text in all commands
+````

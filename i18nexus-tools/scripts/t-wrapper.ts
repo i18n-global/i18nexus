@@ -589,6 +589,12 @@ export class TranslationWrapper {
           return;
         }
 
+        // 빈 문자열이나 공백만 있는 문자열은 스킵
+        const trimmedValue = subPath.node.value.trim();
+        if (!trimmedValue) {
+          return;
+        }
+
         // 한국어 텍스트가 포함된 문자열만 처리
         if (/[가-힣]/.test(subPath.node.value)) {
           wasModified = true;
