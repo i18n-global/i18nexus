@@ -10,6 +10,7 @@ export interface UploadConfig {
   spreadsheetId?: string;
   localesDir?: string;
   sheetName?: string;
+  autoTranslate?: boolean;
 }
 
 const DEFAULT_CONFIG: Required<UploadConfig> = {
@@ -17,6 +18,7 @@ const DEFAULT_CONFIG: Required<UploadConfig> = {
   spreadsheetId: "",
   localesDir: "./locales",
   sheetName: "Translations",
+  autoTranslate: false,
 };
 
 export async function uploadTranslations(config: Partial<UploadConfig> = {}) {
@@ -57,7 +59,10 @@ export async function uploadTranslations(config: Partial<UploadConfig> = {}) {
     await sheetsManager.ensureWorksheet();
 
     // 번역 파일 업로드
-    await sheetsManager.uploadTranslations(finalConfig.localesDir);
+    await sheetsManager.uploadTranslations(
+      finalConfig.localesDir,
+      finalConfig.autoTranslate
+    );
 
     console.log("✅ Translation upload completed successfully");
   } catch (error) {
@@ -98,6 +103,10 @@ if (require.main === module) {
       case "-n":
         config.sheetName = args[++i];
         break;
+      case "--auto-translate":
+      case "-a":
+        config.autoTranslate = true;
+        break;
       case "--help":
       case "-h":
         console.log(`
@@ -108,10 +117,17 @@ Options:
   -s, --spreadsheet-id <id>    Google Spreadsheet ID (required)
   -l, --locales-dir <path>     Path to locales directory (default: "./locales")
   -n, --sheet-name <name>      Sheet name (default: "Translations")
+  -a, --auto-translate         Enable auto-translation mode (English uses GOOGLETRANSLATE formula)
   -h, --help                   Show this help message
 
 Examples:
+  # Basic upload (text only)
   i18n-upload -s "your-spreadsheet-id"
+  
+  # Auto-translate mode (Korean as text, English as GOOGLETRANSLATE formula)
+  i18n-upload -s "your-spreadsheet-id" --auto-translate
+  
+  # With custom paths
   i18n-upload -c "./my-creds.json" -s "your-spreadsheet-id" -l "./translations"
         `);
         process.exit(0);

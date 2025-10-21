@@ -58,6 +58,63 @@ All commands now automatically read from `i18nexus.config.json`:
 
 ## [1.4.0] - 2025-01-15
 
+# Changelog
+
+## [1.5.2] - 2025-01-21
+
+### 🎯 Feature - Auto-translation for Google Sheets Upload
+
+#### Enhanced i18n-upload Command
+
+- **NEW**: `--auto-translate` flag for `i18n-upload` command
+- **NEW**: Automatic GOOGLETRANSLATE formula injection for English translations
+- **IMPROVED**: `i18n-download` now uses `FORMATTED_VALUE` to get calculated results from formulas
+
+#### Auto-translation Mode
+
+When using `i18n-upload --auto-translate`:
+
+- Korean translations are uploaded as plain text
+- English translations are uploaded as `=GOOGLETRANSLATE(C{row}, "ko", "en")` formulas
+- Google Sheets automatically calculates translations in real-time
+- Perfect for rapid initial translations of new features
+
+#### Download Improvements
+
+- `i18n-download` now fetches formula results instead of formula strings
+- Works seamlessly with both text-based and formula-based uploads
+- Ensures consistent text output regardless of upload method
+
+### 📝 Use Cases
+
+**Scenario 1: New Feature Development**
+
+```bash
+# Add Korean keys to your code
+i18n-wrapper
+
+# Extract Korean translations
+i18n-extractor
+
+# Upload with auto-translate for quick English drafts
+i18n-upload --auto-translate
+
+# Download translated results
+i18n-download
+```
+
+**Scenario 2: Manual Translation Workflow**
+
+```bash
+# Upload all as text for manual translation
+i18n-upload
+
+# Translators work on Google Sheets
+
+# Download finalized translations
+i18n-download
+```
+
 ## [1.5.1] - 2025-10-20
 
 ### 🎯 Patch - AST-based constant handling
@@ -66,7 +123,6 @@ All commands now automatically read from `i18nexus.config.json`:
 - **FIX/FEATURE**: `i18n-extractor` can now trace `t(item.prop)` back to constants (internal and external) and extract literal Korean values into `locales/*.json`.
 - **IMPROVED**: Excludes dynamic data sources (API, props, useState, function params) from automatic wrapping.
 - **NEW**: `constantPatterns` config option to customize variable name heuristics for constants (e.g., uppercase, suffix/prefix matching).
-
 
 ### 🎯 Major Features - Type Safety
 

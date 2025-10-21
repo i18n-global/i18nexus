@@ -103,8 +103,11 @@ npx i18n-extractor --dry-run
 로컬 번역 파일(`en.json`, `ko.json`)과 Google Sheets를 동기화합니다.
 
 ```bash
-# Google Sheets에 번역 업로드
+# Google Sheets에 번역 업로드 (기본 모드 - 텍스트만)
 npx i18n-upload
+
+# Google Sheets에 번역 업로드 (자동번역 모드 - 영어는 GOOGLETRANSLATE 수식으로)
+npx i18n-upload --auto-translate
 
 # Google Sheets에서 번역 다운로드 (증분 업데이트 - 새로운 키만 추가)
 npx i18n-download
@@ -114,6 +117,7 @@ npx i18n-download-force
 
 # 옵션으로 실행
 npx i18n-upload -s <spreadsheet-id> -c ./credentials.json
+npx i18n-upload -s <spreadsheet-id> -c ./credentials.json --auto-translate
 npx i18n-download -s <spreadsheet-id> -c ./credentials.json
 ```
 
@@ -124,6 +128,16 @@ npx i18n-download -s <spreadsheet-id> -c ./credentials.json
 - `i18n-download`: 기존 번역 유지, 새로운 키만 추가 (안전)
 - `i18n-download-force`: 모든 번역 덮어쓰기 (최신 상태로 동기화)
 - `i18n-upload`: 로컬의 새로운 키만 Google Sheets에 추가
+- `i18n-upload --auto-translate`: 한국어는 텍스트, 영어는 자동번역 수식으로 업로드
+
+**자동번역 모드 (--auto-translate):**
+
+새로운 기능 개발로 한국어 Key-Value가 대량 추가되었을 때 유용합니다:
+
+- 한국어(ko.json): 텍스트 그대로 업로드
+- 영어(en.json): `=GOOGLETRANSLATE(C2, "ko", "en")` 수식으로 업로드
+- Google Sheets가 자동으로 번역을 실행하여 영어 셀을 채웁니다
+- `i18n-download` 시 수식이 아닌 계산된 번역 결과를 가져옵니다
 
 ### 4. i18n-sheets - Google Sheets 연동 (레거시)
 
