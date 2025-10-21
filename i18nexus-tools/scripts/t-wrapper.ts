@@ -54,7 +54,66 @@ export class TranslationWrapper {
     ]);
   }
 
+  /**
+   * i18n-ignore 주석이 노드 바로 위에 있는지 확인
+   * 파일의 원본 소스코드를 직접 검사하여 주석 감지
+   */
+  private hasIgnoreComment(path: NodePath, sourceCode?: string): boolean {
+    const node = path.node;
+    
+    // 1. AST의 leadingComments 확인
+    if (node.leadingComments) {
+      const hasIgnore = node.leadingComments.some(
+        (comment) =>
+          comment.value.trim() === "i18n-ignore" ||
+          comment.value.trim().startsWith("i18n-ignore")
+      );
+      if (hasIgnore) return true;
+    }
+
+    // 2. 부모 노드의 leadingComments 확인
+    if (path.parentPath?.node?.leadingComments) {
+      const hasIgnore = path.parentPath.node.leadingComments.some(
+        (comment) =>
+          comment.value.trim() === "i18n-ignore" ||
+          comment.value.trim().startsWith("i18n-ignore")
+      );
+      if (hasIgnore) return true;
+    }
+
+    // 3. 소스코드 직접 검사 (node.loc가 있는 경우)
+    if (sourceCode && node.loc) {
+      const startLine = node.loc.start.line;
+      const lines = sourceCode.split('\n');
+      
+      // 현재 라인과 바로 위 라인 검사
+      for (let i = Math.max(0, startLine - 3); i < startLine; i++) {
+        const line = lines[i];
+        if (line && (
+          line.includes('i18n-ignore') ||
+          line.includes('// i18n-ignore') ||
+          line.includes('/* i18n-ignore') ||
+          line.includes('{/* i18n-ignore')
+        )) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   private shouldSkipPath(path: NodePath<t.StringLiteral>): boolean {
+    // i18n-ignore 주석이 있는 경우 스킵
+    if (this.hasIgnoreComment(path)) {
+      return true;
+    }
+
+    // 부모 노드에 i18n-ignore 주석이 있는 경우도 스킵
+    if (path.parent && this.hasIgnoreComment(path.parentPath as NodePath)) {
+      return true;
+    }
+
     // t() 함수로 이미 래핑된 경우 스킵
     if (
       t.isCallExpression(path.parent) &&
@@ -378,6 +437,7 @@ export class TranslationWrapper {
       const ast = parser.parse(code, {
         sourceType: "module",
         plugins: ["jsx", "typescript", "decorators-legacy"],
+        attachComment: true, // 주석을 AST에 첨부
       });
 
       traverse(ast, {
@@ -513,12 +573,12 @@ export class TranslationWrapper {
     });
   }
 
-  private processFunctionBody(path: NodePath<t.Function>): boolean {
+  private processFunctionBody(path: NodePath<t.Function>, sourceCode: string): boolean {
     let wasModified = false;
 
     path.traverse({
       StringLiteral: (subPath) => {
-        if (this.shouldSkipPath(subPath)) {
+        if (this.shouldSkipPath(subPath) || this.hasIgnoreComment(subPath, sourceCode)) {
           return;
         }
 
@@ -537,6 +597,11 @@ export class TranslationWrapper {
         }
       },
       JSXText: (subPath) => {
+        // i18n-ignore 주석이 있는 경우 스킵
+        if (this.hasIgnoreComment(subPath, sourceCode)) {
+          return;
+        }
+
         const text = subPath.node.value.trim();
 
         // 빈 텍스트나 공백만 있는 경우 스킵
@@ -559,6 +624,11 @@ export class TranslationWrapper {
       // JSX 표현식에서 상수 속성 접근 감지
       // 예: {item.label} -> {t(item.label)}
       JSXExpressionContainer: (subPath) => {
+        // i18n-ignore 주석이 있는 경우 스킵
+        if (this.hasIgnoreComment(subPath, sourceCode)) {
+          return;
+        }
+
         const expression = subPath.node.expression;
 
         // 이미 t()로 래핑된 경우 스킵
@@ -801,6 +871,7 @@ export class TranslationWrapper {
         const ast = parser.parse(code, {
           sourceType: "module",
           plugins: ["jsx", "typescript", "decorators-legacy"],
+          attachComment: true, // 주석을 AST에 첨부
         });
 
         // Step 1: Import 문 파싱
@@ -837,7 +908,7 @@ export class TranslationWrapper {
           FunctionDeclaration: (path) => {
             const componentName = path.node.id?.name;
             if (componentName && this.isReactComponent(componentName)) {
-              if (this.processFunctionBody(path)) {
+              if (this.processFunctionBody(path, code)) {
                 isFileModified = true;
                 modifiedComponentPaths.push(path);
               }
@@ -850,7 +921,7 @@ export class TranslationWrapper {
             ) {
               const componentName = path.parent.id.name;
               if (componentName && this.isReactComponent(componentName)) {
-                if (this.processFunctionBody(path)) {
+                if (this.processFunctionBody(path, code)) {
                   isFileModified = true;
                   modifiedComponentPaths.push(path);
                 }
@@ -897,6 +968,7 @@ export class TranslationWrapper {
             const output = generate(ast, {
               retainLines: true,
               compact: false,
+              comments: true, // 주석 유지
               jsescOption: {
                 minimal: true,
               },

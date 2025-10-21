@@ -71,6 +71,36 @@ npx i18n-wrapper --dry-run
 - `useTranslation()` 훅 자동 추가 (i18nexus-core)
 - 번역 키 파일 자동 생성 (띄어쓰기 포함)
 - 기존 t() 호출 및 import 보존
+- **`{/* i18n-ignore */}` 주석으로 특정 코드 래핑 제외**
+
+**래핑 제외 (Ignore) 기능:**
+
+특정 텍스트나 요소를 래핑하지 않으려면 바로 위에 `i18n-ignore` 주석을 추가하세요:
+
+```tsx
+export default function Example() {
+  return (
+    <div>
+      {/* 일반 텍스트 - 래핑됨 */}
+      <h1>안녕하세요</h1>
+      
+      {/* i18n-ignore */}
+      <p>이것은 무시됩니다</p>
+      
+      {/* i18n-ignore */}
+      <span>{"이것도 무시됩니다"}</span>
+    </div>
+  );
+}
+
+// 객체 속성도 제외 가능
+const CONFIG = {
+  // i18n-ignore
+  apiKey: "한글로 된 API 키",
+  // 일반 케이스 - 래핑됨
+  message: "환영합니다"
+};
+```
 
 ### 2. i18n-extractor - 번역 키 추출
 
@@ -98,7 +128,40 @@ npx i18n-extractor --dry-run
 - CSV: 구글 시트 호환 형식 출력 (Key, English, Korean)
 - 중복 키 감지 및 보고
 
-### 3. i18n-upload / i18n-download - Google Sheets 업로드/다운로드
+### 3. i18n-clean-legacy - 사용하지 않는 번역 키 정리
+
+코드에서 실제 사용 중인 번역 키를 분석하여 사용하지 않는 레거시 키를 제거합니다.
+
+```bash
+# 기본 사용법 - 사용하지 않는 키 제거
+npx i18n-clean-legacy
+
+# 미리보기 (파일 수정 없이 확인만)
+npx i18n-clean-legacy --dry-run
+
+# 커스텀 패턴과 언어
+npx i18n-clean-legacy -p "app/**/*.tsx" -l "en,ko,ja"
+
+# 백업 파일 생성 안 함
+npx i18n-clean-legacy --no-backup
+```
+
+**특징:**
+
+- extractor 로직을 활용하여 실제 사용 중인 키 자동 추출
+- locale 파일과 비교하여 사용하지 않는 키 제거
+- 잘못된 값(N/A, 빈 문자열)을 가진 키 제거
+- 코드에는 있지만 locale에 없는 키 리포트
+- 자동 백업 파일 생성 (타임스탬프 포함)
+- Dry-run 모드 지원
+
+**제거 대상:**
+
+- 코드에서 사용하지 않는 키 (locale에만 존재)
+- 값이 "_N/A", "N/A", "" 등인 잘못된 키
+- null/undefined 값을 가진 키
+
+### 4. i18n-upload / i18n-download - Google Sheets 업로드/다운로드
 
 로컬 번역 파일(`en.json`, `ko.json`)과 Google Sheets를 동기화합니다.
 

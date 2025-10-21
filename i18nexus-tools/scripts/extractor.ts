@@ -660,6 +660,36 @@ ${exportObj}
     }
   }
 
+  /**
+   * 추출된 키 목록 반환 (clean-legacy에서 사용)
+   */
+  public getExtractedKeys(): ExtractedKey[] {
+    return Array.from(this.extractedKeys.values());
+  }
+
+  /**
+   * 키만 분석하고 파일은 쓰지 않음 (clean-legacy용)
+   */
+  public async extractKeysOnly(): Promise<ExtractedKey[]> {
+    try {
+      const files = await glob(this.config.sourcePattern);
+
+      if (files.length === 0) {
+        return [];
+      }
+
+      // 파일 분석
+      files.forEach((file) => {
+        this.parseFile(file);
+      });
+
+      return this.getExtractedKeys();
+    } catch (error) {
+      console.error("❌ Key extraction failed:", error);
+      throw error;
+    }
+  }
+
   public async extract(): Promise<void> {
     console.log("🔍 Starting translation key extraction...");
     console.log(`📁 Pattern: ${this.config.sourcePattern}`);

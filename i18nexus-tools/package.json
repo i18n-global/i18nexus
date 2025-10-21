@@ -1,6 +1,6 @@
 {
   "name": "i18nexus-tools",
-  "version": "1.5.2",
+  "version": "1.5.4",
   "description": "CLI tools for i18nexus - automate i18n workflows with type-safe configuration and Google Sheets integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,8 @@
     "i18n-upload": "dist/bin/i18n-upload.js",
     "i18n-download": "dist/bin/i18n-download.js",
     "i18n-download-force": "dist/bin/i18n-download-force.js",
-    "i18n-sheets": "dist/bin/i18n-sheets.js"
+    "i18n-sheets": "dist/bin/i18n-sheets.js",
+    "i18n-clean-legacy": "dist/bin/i18n-clean-legacy.js"
   },
   "scripts": {
     "build": "npm run clean && tsc && npm run postbuild",

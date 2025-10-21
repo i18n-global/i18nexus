@@ -60,6 +60,80 @@ All commands now automatically read from `i18nexus.config.json`:
 
 # Changelog
 
+## [1.5.4] - 2025-01-21
+
+### 🎯 Feature - Clean Legacy Keys & Ignore Comments
+
+#### New Command: i18n-clean-legacy
+
+- **NEW**: `i18n-clean-legacy` command to remove unused and invalid translation keys
+- Analyzes source code using extractor logic to find actively used keys
+- Compares with locale files and removes unused keys
+- Removes keys with invalid values ("_N/A", "N/A", "", null, undefined)
+- Reports missing keys (used in code but not in locale)
+- Creates timestamped backup files before modifications
+- Supports dry-run mode to preview changes
+
+#### Wrapper Ignore Comment Support
+
+- **NEW**: `// i18n-ignore` or `/* i18n-ignore */` comment support in wrapper
+- Place comment directly above code to skip wrapping
+- Works with JSX elements, string literals, and expressions
+- Useful for preserving intentionally untranslated strings
+
+### 📝 Use Cases
+
+**Legacy Cleanup:**
+
+```bash
+# Preview what would be removed
+i18n-clean-legacy --dry-run
+
+# Clean up unused keys with backup
+i18n-clean-legacy
+
+# Clean without backup
+i18n-clean-legacy --no-backup
+```
+
+**Ignore Wrapping:**
+
+```tsx
+// i18n-ignore
+<p>This will not be wrapped with t()</p>
+
+{/* i18n-ignore */}
+<span>Also ignored</span>
+```
+
+## [1.5.2] - 2025-01-21
+
+### 🎯 Feature - Wrapper Ignore Comment
+
+#### i18n-ignore Comment Support
+
+- **NEW**: `{/* i18n-ignore */}` comment to exclude specific code from wrapping
+- **NEW**: Works with JSX elements, strings, and object properties
+- **IMPROVED**: Parser now preserves comments in AST for accurate detection
+
+#### Usage
+
+Add `i18n-ignore` comment immediately before the code you want to exclude:
+
+```tsx
+{/* i18n-ignore */}
+<p>This won't be wrapped</p>
+
+// i18n-ignore
+const apiKey = "한글 API 키";
+```
+
+#### Technical Details
+
+- Comments are attached to AST nodes using `attachComment: true`
+- Source code line analysis for JSX comments
+- Supports both line comments (`//`) and block comments (`/* */`)
+
 ## [1.5.2] - 2025-01-21
 
 ### 🎯 Feature - Auto-translation for Google Sheets Upload
