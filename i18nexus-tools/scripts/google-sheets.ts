@@ -194,7 +194,7 @@ export class GoogleSheetsManager {
       if (force) {
         // Force 모드: 모든 키 업로드
         translationsToUpload = translations;
-        
+
         // 기존 데이터 모두 삭제 (헤더 제외)
         const existingData = await this.downloadTranslations();
         if (existingData.length > 0) {

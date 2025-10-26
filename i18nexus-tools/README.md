@@ -68,10 +68,14 @@ npx i18n-wrapper --dry-run
 **특징:**
 
 - 한국어/영어 문자열 자동 감지
+- **템플릿 리터럴 지원**: `` `한국어 ${변수}` `` 패턴 자동 래핑
 - `useTranslation()` 훅 자동 추가 (i18nexus-core)
+- **서버 컴포넌트 자동 감지**: `getServerTranslation` 사용 시 `useTranslation` 훅 추가 안 함
 - 번역 키 파일 자동 생성 (띄어쓰기 포함)
 - 기존 t() 호출 및 import 보존
 - **`{/* i18n-ignore */}` 주석으로 특정 코드 래핑 제외**
+- **상수 기반 지능형 래핑**: 상수 데이터만 자동 래핑, API/동적 데이터는 제외
+- **컨텍스트 기반 데이터 소스 추적**: props, 파라미터, API 데이터 자동 감지
 
 **래핑 제외 (Ignore) 기능:**
 
@@ -100,6 +104,135 @@ const CONFIG = {
   // 일반 케이스 - 래핑됨
   message: "환영합니다",
 };
+```
+
+**상수 기반 지능형 래핑:**
+
+t-wrapper는 데이터의 소스를 분석하여 **정적 상수에서 온 데이터만** 자동으로 `t()` 함수로 래핑합니다.
+
+```tsx
+// ✅ 처리됨 - 정적 상수
+const NAV_ITEMS = [
+  { path: "/home", label: "홈" },
+  { path: "/about", label: "소개" },
+];
+
+export default function Navigation() {
+  return (
+    <nav>
+      {/* item.label이 자동으로 t(item.label)로 래핑됨 */}
+      {NAV_ITEMS.map((item) => (
+        <a href={item.path}>{item.label}</a>
+      ))}
+    </nav>
+  );
+}
+
+// ❌ 제외됨 - API 데이터 (useState)
+export default function UserList() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/users").then((data) => setUsers(data));
+  }, []);
+
+  return (
+    <div>
+      {/* user.name은 자동 래핑되지 않음 (API 데이터) */}
+      {users.map((user) => (
+        <div>{user.name}</div>
+      ))}
+    </div>
+  );
+}
+
+// ❌ 제외됨 - Props 데이터
+interface Props {
+  items: Array<{ label: string }>;
+}
+
+export default function List({ items }: Props) {
+  return (
+    <div>
+      {/* item.label은 자동 래핑되지 않음 (props) */}
+      {items.map((item) => (
+        <div>{item.label}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+**자동 제외되는 데이터 소스:**
+
+- `useState`, `useEffect`, `useQuery` 등의 React 훅에서 온 데이터
+- `fetch`, `axios` 등 API 호출 결과
+- 함수의 props나 파라미터로 전달된 데이터
+- `let`, `var`로 선언된 동적 변수
+- 배열 구조 분해 할당 (예: `const [data, setData] = useState()`)
+
+**자동 처리되는 데이터 소스:**
+
+- `const`로 선언된 정적 상수 (ALL_CAPS, PascalCase)
+- 외부 파일에서 import된 상수
+- 한국어 문자열을 포함한 객체/배열 리터럴
+- `label`, `title`, `text`, `name`, `placeholder` 등 렌더링 가능한 속성
+
+**템플릿 리터럴 → i18next Interpolation 자동 변환:**
+
+```tsx
+// Before
+export default function Component() {
+  const count = 5;
+  const user = { name: "홍길동" };
+
+  return (
+    <div>
+      <h1>{`환영합니다`}</h1>
+      <p>{`총 ${count}개의 항목`}</p>
+      <span>{`사용자: ${user.name}`}</span>
+    </div>
+  );
+}
+
+// After (자동 변환 - i18next 표준 형식)
+export default function Component() {
+  const { t } = useTranslation(); // 자동 추가됨
+  const count = 5;
+  const user = { name: "홍길동" };
+
+  return (
+    <div>
+      <h1>{t("환영합니다")}</h1>
+      <p>{t("총 {{count}}개의 항목", { count })}</p>
+      <span>{t("사용자: {{user_name}}", { user_name: user.name })}</span>
+    </div>
+  );
+}
+```
+
+**변환 규칙:**
+
+- `${변수}` → `{{변수}}` + interpolation 객체
+- `${obj.prop}` → `{{obj_prop}}` (점을 언더스코어로 변환)
+- `${표현식}` → `{{expr0}}` (복잡한 표현식은 자동 번호)
+
+**서버 컴포넌트 자동 감지:**
+
+```tsx
+// 서버 컴포넌트 - useTranslation 훅이 추가되지 않음
+export default async function ServerPage() {
+  const { t } = await getServerTranslation();
+
+  return <h1>{t("서버에서 렌더링")}</h1>;
+}
+
+// 클라이언트 컴포넌트 - useTranslation 훅이 자동 추가됨
+("use client");
+export default function ClientComponent() {
+  // const { t } = useTranslation(); 이 자동으로 추가됨
+  return <h1>{t("클라이언트에서 렌더링")}</h1>;
+}
 ```
 
 ### 2. i18n-extractor - 번역 키 추출
@@ -138,7 +271,6 @@ npx i18n-extractor --dry-run
   - 기존에 작성한 번역이 유지됨
   - 새로 추가된 키만 locale 파일에 추가
   - 안전하고 비파괴적인 업데이트
-  
 - **Force 모드**: 번역 파일 전체를 재생성해야 할 때
   - 코드에서 추출된 키로 완전히 새로 생성
   - 기존 번역이 모두 초기화됨 (주의 필요)
@@ -212,11 +344,13 @@ npx i18n-download -s <spreadsheet-id> -c ./credentials.json
 - `locales/en.json`, `locales/ko.json` 형식으로 저장
 
 **업로드 모드:**
+
 - **기본 모드**: 로컬의 새로운 키만 Google Sheets에 추가 (기존 시트 데이터 유지)
 - **Force 모드 (--force)**: 기존 시트 데이터를 모두 지우고 로컬 번역 전체를 새로 업로드
 - **자동번역 모드 (--auto-translate)**: 한국어는 텍스트, 영어는 자동번역 수식으로 업로드
 
 **다운로드 모드:**
+
 - **i18n-download**: 기존 번역 유지, 새로운 키만 추가 (안전)
 - **i18n-download-force**: 모든 번역 덮어쓰기 (최신 상태로 동기화)
 
@@ -447,15 +581,15 @@ npx i18n-extractor -p "src/**/*.tsx" -d "./locales"
 
 ### i18n-extractor 옵션
 
-| 옵션               | 설명                         | 기본값                          |
-| ------------------ | ---------------------------- | ------------------------------- |
-| `-p, --pattern`    | 소스 파일 패턴               | `"src/**/*.{js,jsx,ts,tsx}"`    |
-| `-o, --output`     | 출력 파일명                  | `"extracted-translations.json"` |
-| `-d, --output-dir` | 출력 디렉토리                | `"./locales"`                   |
-| `-f, --format`     | 출력 형식 (json/csv)         | `"json"`                        |
-| `--force`          | Force 모드 (기존 번역 덮어씀) | `false` (새 키만 추가)           |
-| `--dry-run`        | 실제 파일 생성 없이 미리보기 | -                               |
-| `-h, --help`       | 도움말 표시                  | -                               |
+| 옵션               | 설명                          | 기본값                          |
+| ------------------ | ----------------------------- | ------------------------------- |
+| `-p, --pattern`    | 소스 파일 패턴                | `"src/**/*.{js,jsx,ts,tsx}"`    |
+| `-o, --output`     | 출력 파일명                   | `"extracted-translations.json"` |
+| `-d, --output-dir` | 출력 디렉토리                 | `"./locales"`                   |
+| `-f, --format`     | 출력 형식 (json/csv)          | `"json"`                        |
+| `--force`          | Force 모드 (기존 번역 덮어씀) | `false` (새 키만 추가)          |
+| `--dry-run`        | 실제 파일 생성 없이 미리보기  | -                               |
+| `-h, --help`       | 도움말 표시                   | -                               |
 
 ### i18n-sheets 옵션
 

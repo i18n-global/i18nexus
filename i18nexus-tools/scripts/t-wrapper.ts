@@ -285,6 +285,7 @@ export class TranslationWrapper {
 
   /**
    * API 데이터나 동적 데이터인지 확인
+   * 동적 데이터는 상수 분석에서 제외됨
    */
   private isDynamicData(path: NodePath<t.VariableDeclaration>): boolean {
     // let, var 선언은 동적 데이터로 간주
@@ -300,7 +301,7 @@ export class TranslationWrapper {
         if (t.isCallExpression(declarator.init)) {
           const callee = declarator.init.callee;
 
-          // useState, useQuery, useMutation, useEffect 등
+          // useState, useQuery, useMutation, useEffect, useCallback, useMemo 등
           if (
             t.isIdentifier(callee) &&
             (callee.name.startsWith("use") ||
@@ -330,6 +331,7 @@ export class TranslationWrapper {
         }
 
         // 배열/객체 destructuring에서 오는 데이터
+        // 예: const [data, setData] = useState() - 이미 위에서 잡히지만 추가 안전장치
         if (
           t.isArrayPattern(declarator.id) ||
           t.isObjectPattern(declarator.id)
@@ -358,6 +360,7 @@ export class TranslationWrapper {
 
   /**
    * 변수가 Props나 함수 파라미터에서 온 것인지 확인
+   * 배열 메서드의 콜백 파라미터는 제외 (예: map, filter)
    */
   private isFromPropsOrParams(varName: string, scope: any): boolean {
     const binding = scope.getBinding(varName);
@@ -394,6 +397,7 @@ export class TranslationWrapper {
               "some",
               "every",
               "reduce",
+              "flatMap",
             ];
             if (arrayMethods.includes(methodName)) {
               // 배열 메서드의 콜백 파라미터는 props/params가 아님
@@ -408,6 +412,21 @@ export class TranslationWrapper {
           const params = funcParent.params;
           // 첫 번째 파라미터는 보통 props
           if (params.length > 0 && params[0] === bindingPath.node) {
+            return true;
+          }
+
+          // 객체 destructuring props도 확인
+          // 예: function Component({ items }) 또는 ({ items }) =>
+          if (
+            params.length > 0 &&
+            t.isObjectPattern(params[0]) &&
+            params[0].properties.some((prop) => {
+              if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
+                return prop.value.name === varName;
+              }
+              return false;
+            })
+          ) {
             return true;
           }
         }
@@ -574,11 +593,40 @@ export class TranslationWrapper {
     });
   }
 
+  /**
+   * 함수가 getServerTranslation으로 감싸진 서버 컴포넌트인지 확인
+   */
+  private isServerComponent(path: NodePath<t.Function>): boolean {
+    // 함수 body 내에서 getServerTranslation 호출이 있는지 확인
+    let hasServerTranslation = false;
+
+    path.traverse({
+      CallExpression: (callPath) => {
+        if (
+          t.isIdentifier(callPath.node.callee, {
+            name: "getServerTranslation",
+          }) ||
+          (t.isAwaitExpression(callPath.parent) &&
+            t.isCallExpression(callPath.node) &&
+            t.isIdentifier(callPath.node.callee, {
+              name: "getServerTranslation",
+            }))
+        ) {
+          hasServerTranslation = true;
+          callPath.stop(); // 찾았으면 더 이상 탐색하지 않음
+        }
+      },
+    });
+
+    return hasServerTranslation;
+  }
+
   private processFunctionBody(
     path: NodePath<t.Function>,
     sourceCode: string
-  ): boolean {
+  ): { wasModified: boolean; isServerComponent: boolean } {
     let wasModified = false;
+    const isServerComponent = this.isServerComponent(path);
 
     path.traverse({
       StringLiteral: (subPath) => {
@@ -608,6 +656,94 @@ export class TranslationWrapper {
             subPath.replaceWith(replacement);
           }
         }
+      },
+      TemplateLiteral: (subPath) => {
+        // i18n-ignore 주석이 있는 경우 스킵
+        if (
+          this.shouldSkipPath(subPath as any) ||
+          this.hasIgnoreComment(subPath, sourceCode)
+        ) {
+          return;
+        }
+
+        // 이미 t()로 래핑된 경우 스킵
+        if (
+          t.isCallExpression(subPath.parent) &&
+          t.isIdentifier(subPath.parent.callee, { name: "t" })
+        ) {
+          return;
+        }
+
+        // 템플릿 리터럴의 모든 부분에 한국어가 있는지 확인
+        const hasKorean = subPath.node.quasis.some((quasi) =>
+          /[가-힣]/.test(quasi.value.raw)
+        );
+
+        if (!hasKorean) {
+          return;
+        }
+
+        // 템플릿 리터럴을 i18next interpolation 형식으로 변환
+        // 예: `안녕 ${name}` → t(`안녕 {{name}}`, { name })
+        wasModified = true;
+
+        const templateNode = subPath.node;
+        const expressions = templateNode.expressions;
+        const quasis = templateNode.quasis;
+
+        // 표현식이 없으면 단순 문자열로 처리
+        if (expressions.length === 0) {
+          const replacement = t.callExpression(t.identifier("t"), [
+            t.stringLiteral(quasis[0].value.raw),
+          ]);
+          subPath.replaceWith(replacement);
+          return;
+        }
+
+        // i18next 형식으로 변환: `안녕 ${name}` → `안녕 {{name}}`
+        let i18nextString = "";
+        const interpolationVars: t.ObjectProperty[] = [];
+
+        quasis.forEach((quasi, index) => {
+          i18nextString += quasi.value.raw;
+
+          if (index < expressions.length) {
+            const expr = expressions[index];
+
+            // 변수명 추출
+            let varName: string;
+            if (t.isIdentifier(expr)) {
+              varName = expr.name;
+            } else if (t.isMemberExpression(expr)) {
+              // user.name → user_name
+              varName = generate(expr).code.replace(/\./g, "_");
+            } else {
+              // 복잡한 표현식은 expr0, expr1 등으로 처리
+              varName = `expr${index}`;
+            }
+
+            // i18next 형식: {{varName}}
+            i18nextString += `{{${varName}}}`;
+
+            // interpolation 객체에 추가
+            interpolationVars.push(
+              t.objectProperty(t.identifier(varName), expr as t.Expression)
+            );
+          }
+        });
+
+        // t("안녕 {{name}}", { name: name })
+        const args: Array<t.Expression | t.SpreadElement> = [
+          t.stringLiteral(i18nextString),
+        ];
+
+        // interpolation 객체가 있으면 두 번째 인자로 추가
+        if (interpolationVars.length > 0) {
+          args.push(t.objectExpression(interpolationVars));
+        }
+
+        const replacement = t.callExpression(t.identifier("t"), args);
+        subPath.replaceWith(replacement);
       },
       JSXText: (subPath) => {
         // i18n-ignore 주석이 있는 경우 스킵
@@ -818,7 +954,7 @@ export class TranslationWrapper {
       },
     });
 
-    return wasModified;
+    return { wasModified, isServerComponent };
   }
 
   private addImportIfNeeded(ast: t.File): boolean {
@@ -914,16 +1050,24 @@ export class TranslationWrapper {
           });
         }
 
-        const modifiedComponentPaths: NodePath<t.Function>[] = [];
+        // 수정된 컴포넌트 경로와 서버 컴포넌트 여부 저장
+        const modifiedComponentPaths: Array<{
+          path: NodePath<t.Function>;
+          isServerComponent: boolean;
+        }> = [];
 
         // Step 4: 컴포넌트 내부 처리
         traverse(ast, {
           FunctionDeclaration: (path) => {
             const componentName = path.node.id?.name;
             if (componentName && this.isReactComponent(componentName)) {
-              if (this.processFunctionBody(path, code)) {
+              const result = this.processFunctionBody(path, code);
+              if (result.wasModified) {
                 isFileModified = true;
-                modifiedComponentPaths.push(path);
+                modifiedComponentPaths.push({
+                  path,
+                  isServerComponent: result.isServerComponent,
+                });
               }
             }
           },
@@ -934,9 +1078,13 @@ export class TranslationWrapper {
             ) {
               const componentName = path.parent.id.name;
               if (componentName && this.isReactComponent(componentName)) {
-                if (this.processFunctionBody(path, code)) {
+                const result = this.processFunctionBody(path, code);
+                if (result.wasModified) {
                   isFileModified = true;
-                  modifiedComponentPaths.push(path);
+                  modifiedComponentPaths.push({
+                    path,
+                    isServerComponent: result.isServerComponent,
+                  });
                 }
               }
             }
@@ -947,30 +1095,45 @@ export class TranslationWrapper {
           let wasHookAdded = false;
 
           // 수정된 컴포넌트에 useTranslation 훅 추가
-          modifiedComponentPaths.forEach((componentPath) => {
-            if (componentPath.scope.hasBinding("t")) {
-              return;
-            }
+          // 단, 서버 컴포넌트는 제외 (getServerTranslation 사용)
+          modifiedComponentPaths.forEach(
+            ({ path: componentPath, isServerComponent }) => {
+              // 서버 컴포넌트는 useTranslation 훅을 추가하지 않음
+              if (isServerComponent) {
+                console.log(
+                  `     🔵 Server component detected - skipping useTranslation hook`
+                );
+                return;
+              }
+              if (componentPath.scope.hasBinding("t")) {
+                return;
+              }
 
-            const body = componentPath.get("body");
-            if (body.isBlockStatement()) {
-              let hasHook = false;
-              body.traverse({
-                CallExpression: (path) => {
-                  if (
-                    t.isIdentifier(path.node.callee, { name: "useTranslation" })
-                  ) {
-                    hasHook = true;
-                  }
-                },
-              });
+              const body = componentPath.get("body");
+              if (body.isBlockStatement()) {
+                let hasHook = false;
+                body.traverse({
+                  CallExpression: (path) => {
+                    if (
+                      t.isIdentifier(path.node.callee, {
+                        name: "useTranslation",
+                      })
+                    ) {
+                      hasHook = true;
+                    }
+                  },
+                });
 
-              if (!hasHook) {
-                body.unshiftContainer("body", this.createUseTranslationHook());
-                wasHookAdded = true;
+                if (!hasHook) {
+                  body.unshiftContainer(
+                    "body",
+                    this.createUseTranslationHook()
+                  );
+                  wasHookAdded = true;
+                }
               }
             }
-          });
+          );
 
           // 필요한 경우 import 추가
           if (wasHookAdded) {

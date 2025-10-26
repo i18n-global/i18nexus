@@ -45,7 +45,11 @@ export async function uploadTranslations(
   });
 
   await sheetsManager.authenticate();
-  await sheetsManager.uploadTranslations(dir, config.autoTranslate, config.force);
+  await sheetsManager.uploadTranslations(
+    dir,
+    config.autoTranslate,
+    config.force
+  );
 }
 
 // CLI 실행 부분

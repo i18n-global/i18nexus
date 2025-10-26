@@ -1,6 +1,6 @@
 {
   "name": "i18nexus-tools",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "description": "CLI tools for i18nexus - automate i18n workflows with type-safe configuration and Google Sheets integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,10 +30,28 @@
     "typescript",
     "google-sheets",
     "code-transformation",
-    "automation"
+    "automation",
+    "next.js",
+    "server-components",
+    "i18next",
+    "localization"
   ],
   "author": "i18nexus",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "@babel/generator": "^7.23.4",
     "@babel/parser": "^7.23.4",

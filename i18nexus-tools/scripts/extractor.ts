@@ -629,9 +629,11 @@ ${exportObj}
 
         if (this.config.force) {
           // Force 모드: 기존 값을 모두 덮어씀
-          console.log(`🔄 Force mode: Overwriting all translations in ${langFile}`);
+          console.log(
+            `🔄 Force mode: Overwriting all translations in ${langFile}`
+          );
           mergedTranslations = {};
-          
+
           Object.keys(data).forEach((key) => {
             if (lang === "ko") {
               // 한국어는 키를 그대로 또는 defaultValue 사용

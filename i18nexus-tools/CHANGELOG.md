@@ -1,6 +1,117 @@
 ````markdown
 # Changelog
 
+## [1.5.7] - 2025-01-26
+
+### 🎯 Major Feature - Intelligent Context-Based Wrapping
+
+#### Enhanced i18n-wrapper
+
+- **NEW**: Template literal support - automatically wraps `` `한국어 ${변수}` `` patterns
+- **NEW**: Server component auto-detection - `getServerTranslation` usage prevents `useTranslation` hook injection
+- **NEW**: Context-based data source tracking - automatically distinguishes between static constants and dynamic data
+- **NEW**: API data pattern detection - excludes `useState`, `useEffect`, `fetch`, `axios`, and hook-based data
+- **NEW**: Props and parameter detection - excludes function parameters and props (including destructured props)
+- **IMPROVED**: Constant analysis now tracks data flow from source to usage
+- **IMPROVED**: Only wraps data from static `const` declarations, not API/dynamic sources
+- **IMPROVED**: Better handling of array methods (`map`, `filter`, etc.) in constant iteration
+
+#### Intelligent Data Source Detection
+
+**✅ Auto-wrapped (Static Constants):**
+
+```tsx
+const NAV_ITEMS = [
+  { path: "/home", label: "홈" },
+  { path: "/about", label: "소개" },
+];
+
+function Navigation() {
+  return NAV_ITEMS.map((item) => (
+    // item.label automatically wrapped with t(item.label)
+    <a href={item.path}>{item.label}</a>
+  ));
+}
+```
+
+**❌ Auto-excluded (Dynamic Data):**
+
+```tsx
+// API data from useState
+const [users, setUsers] = useState([]);
+
+// Props data
+function List({ items }) {
+  return items.map((item) => <div>{item.label}</div>);
+}
+
+// Hook-based data
+const { data } = useQuery("/api/data");
+```
+
+#### Template Literal Support with i18next Interpolation
+
+**Before:**
+
+```tsx
+<h1>{`환영합니다`}</h1>
+<p>{`사용자: ${count}명`}</p>
+<p>{`이름: ${user.name}`}</p>
+```
+
+**After (automatically converted to i18next format):**
+
+```tsx
+<h1>{t("환영합니다")}</h1>
+<p>{t("사용자: {{count}}명", { count })}</p>
+<p>{t("이름: {{user_name}}", { user_name: user.name })}</p>
+```
+
+**Key Features:**
+
+- Template literals converted to i18next interpolation format
+- Variables: `${count}` → `{{count}}`
+- Object properties: `${user.name}` → `{{user_name}}`
+- Complex expressions: `${count * 2}` → `{{expr0}}`
+- Automatic interpolation object generation
+
+#### Server Component Detection
+
+**Server Component (No useTranslation hook added):**
+
+```tsx
+export default async function ServerPage() {
+  const { t } = await getServerTranslation();
+  return <h1>{t("서버 렌더링")}</h1>;
+}
+```
+
+**Client Component (useTranslation hook auto-added):**
+
+```tsx
+"use client";
+export default function ClientPage() {
+  // const { t } = useTranslation(); <- Auto-injected
+  return <h1>{t("클라이언트 렌더링")}</h1>;
+}
+```
+
+### ✨ Benefits
+
+- **Safer automatic wrapping**: Only processes static, translatable content
+- **Less manual cleanup**: API data and dynamic content automatically excluded
+- **Better Next.js support**: Proper server/client component handling
+- **Smarter detection**: Traces data from declaration to usage
+- **Fewer false positives**: Understands context and data flow
+
+### 🔧 Technical Details
+
+- Enhanced `isFromPropsOrParams()` with destructuring support
+- New `isServerComponent()` method to detect `getServerTranslation` usage
+- Improved `isDynamicData()` to catch more API/hook patterns
+- Better constant analysis with external file import support
+- Added `flatMap` to array method detection
+
 ## [1.5.6] - 2025-01-21
 
 ### 🐛 Bug Fix - Wrapper Empty String Filter
@@ -11,12 +122,14 @@
 - **IMPROVED**: Better filtering to avoid wrapping meaningless strings
 
 **Before:**
+
 ```tsx
 const value = ""; // Would be wrapped with t("")
 const space = "   "; // Would be wrapped with t("   ")
 ```
 
 **After:**
+
 ```tsx
 const value = ""; // Skipped (empty string)
 const space = "   "; // Skipped (whitespace only)
