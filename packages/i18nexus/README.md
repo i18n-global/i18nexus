@@ -99,6 +99,27 @@ changeLanguage("fr"); // ❌ Compile error!
 - **Import Management**: Adds necessary imports where needed
 - **TypeScript Support**: Full TypeScript compatibility
 
+### 🎨 Variable Interpolation
+
+- **Dynamic Values**: Insert variables into translations with `{{variable}}` syntax
+- **Type-Safe**: Full TypeScript support for variables and styles
+- **Styled Variables**: Apply CSS styles to variables (Client Components only)
+- **Server Support**: Works in both Server and Client Components
+
+```tsx
+// Client Component with styled variables
+const { t } = useTranslation();
+<p>
+  {t("환영합니다 {{name}}님", { name: "홍길동" }, { name: { color: "blue" } })}
+</p>;
+
+// Server Component with variables
+const { t } = await createServerI18n();
+<p>{t("{{count}}개의 메시지", { count: 5 })}</p>;
+```
+
+See [INTERPOLATION_GUIDE.md](./INTERPOLATION_GUIDE.md) for detailed examples.
+
 ### 🔍 Translation Key Extraction
 
 - **Comprehensive Scanning**: Extracts all `t()` wrapped keys from your codebase
@@ -500,15 +521,30 @@ interface LanguageConfig {
 
 ```tsx
 import { createServerI18n } from "i18nexus/server";
+import type { ServerTranslationVariables } from "i18nexus/server";
 
 // All-in-one server i18n setup
 const { language, t, translations } = await createServerI18n({
-  cookieStore?: ReadonlyRequestCookies;
   localesDir?: string;
   cookieName?: string;
   defaultLanguage?: string;
   translations?: Record<string, Record<string, string>>;
 });
+
+// Translation without variables
+t("Welcome")
+// Returns: "Welcome"
+
+// Translation with variables
+t("Hello {{name}}", { name: "World" })
+// Returns: "Hello World"
+
+// Translation with fallback (legacy)
+t("Welcome", "환영합니다")
+// Returns: "Welcome" or "환영합니다" if key not found
+
+// Variables type
+type ServerTranslationVariables = Record<string, string | number>;
 ```
 
 ### Client Hooks
@@ -516,6 +552,18 @@ const { language, t, translations } = await createServerI18n({
 ```tsx
 // Translation hook with type safety
 const { t, currentLanguage, isReady } = useTranslation<AppLanguages>();
+
+// Translation with variables
+t("Hello {{name}}", { name: "World" });
+// Returns: "Hello World"
+
+// Translation with variables and styles (returns React.ReactElement)
+t(
+  "Price: {{amount}}",
+  { amount: 100 },
+  { amount: { color: "red", fontWeight: "bold" } }
+);
+// Returns: <>Price: <span style={{...}}>100</span></>
 
 // Language switcher hook with type safety
 const {
@@ -526,6 +574,32 @@ const {
   switchToPreviousLanguage,
   isLoading,
 } = useLanguageSwitcher<AppLanguages>();
+```
+
+**Translation Function Types:**
+
+```tsx
+import type {
+  TranslationVariables,
+  TranslationStyles,
+  TranslationFunction,
+} from "i18nexus";
+
+// Variables type
+type TranslationVariables = Record<string, string | number>;
+
+// Styles type
+type TranslationStyles = Record<string, React.CSSProperties>;
+
+// Translation function overloads
+interface TranslationFunction {
+  (
+    key: string,
+    variables: TranslationVariables,
+    styles: TranslationStyles
+  ): React.ReactElement;
+  (key: string, variables?: TranslationVariables): string;
+}
 ```
 
 ### Config Utilities
@@ -591,8 +665,52 @@ your-project/
 
 - 📖 [QUICK_START.md](./QUICK_START.md) - Quick start guide
 - 🎯 [TYPED_CONFIG.md](./TYPED_CONFIG.md) - Type-safe configuration guide
+- 🎨 [INTERPOLATION_GUIDE.md](./INTERPOLATION_GUIDE.md) - Variable interpolation guide
+- 🛠️ [DEVTOOLS.md](./DEVTOOLS.md) - Developer tools guide
 - 📊 [Google Sheets Guide](./docs/google-sheets.md)
 - 🖥️ [Server Components Guide](./docs/server-components.md)
+
+---
+
+## 🚀 Publishing & Deployment
+
+### Automatic Publishing to NPM
+
+This package is configured with GitHub Actions to automatically publish to npm when code is pushed to the main branch.
+
+**Workflow:**
+
+1. Update the version in `package.json`:
+
+   ```bash
+   npm version patch  # or minor, major
+   ```
+
+2. Push to main branch:
+
+   ```bash
+   git push origin main
+   ```
+
+3. GitHub Actions will automatically:
+   - Run tests
+   - Build the package
+   - Publish to npm (if version is new)
+   - Create a Git tag
+   - Create a GitHub Release
+
+**Setup Requirements:**
+
+- NPM_TOKEN must be configured in GitHub Secrets
+- See [`.github/DEPLOYMENT_SETUP.md`](./.github/DEPLOYMENT_SETUP.md) for detailed setup instructions
+
+### Continuous Integration
+
+- **Pull Requests**: Automatically tested across Node.js 16, 18, and 20
+- **Main Branch**: Automatically published when tests pass
+- **Version Check**: Prevents duplicate publishing of the same version
+
+For more details, see the [Deployment Setup Guide](./.github/DEPLOYMENT_SETUP.md).
 
 ---
 

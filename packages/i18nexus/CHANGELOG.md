@@ -5,6 +5,73 @@ All notable changes to i18nexus will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🚀 CI/CD Automation
+
+- **NEW**: GitHub Actions workflow for automatic npm publishing on main branch push
+- **NEW**: CI workflow for automated testing on Pull Requests (Node.js 16, 18, 20)
+- **NEW**: Version check to prevent duplicate publishing
+- **NEW**: Automatic Git tag and GitHub Release creation
+- **NEW**: `.github/DEPLOYMENT_SETUP.md` - Complete deployment guide
+
+### 🎨 Variable Interpolation
+
+- **NEW**: Variable interpolation support with `{{variable}}` syntax
+- **NEW**: Works in both Client Components (`useTranslation`) and Server Components (`createServerTranslation`)
+- **NEW**: `ServerTranslationVariables` type for server-side translations
+- **NEW**: Support for string and number variables
+- **NEW**: Styled variables in Client Components with CSS styles
+- **NEW**: Multiple variables in single translation string
+- **NEW**: Backwards compatible fallback parameter support
+- **NEW**: `INTERPOLATION_GUIDE.md` - Complete variable interpolation guide
+- **NEW**: Comprehensive test suite with 21 test cases
+
+### 📝 Documentation
+
+- **NEW**: `INTERPOLATION_GUIDE.md` - Detailed variable interpolation documentation
+- **NEW**: `examples/InterpolationExample.tsx` - Client Component examples
+- **NEW**: `examples/ServerInterpolationExample.tsx` - Server Component examples
+- **IMPROVED**: README updated with variable interpolation features
+- **IMPROVED**: API Reference with interpolation examples
+- **IMPROVED**: Type documentation with `TranslationVariables` and `TranslationStyles`
+
+### ✨ Enhancements
+
+#### Translation Functions
+
+```tsx
+// Client Component - String interpolation
+t("Hello {{name}}", { name: "World" });
+// Returns: "Hello World"
+
+// Client Component - Styled variables
+t(
+  "Price: {{amount}}",
+  { amount: 100 },
+  { amount: { color: "red", fontWeight: "bold" } }
+);
+// Returns: React.ReactElement with styled span
+
+// Server Component - String interpolation
+t("Hello {{name}}", { name: "World" });
+// Returns: "Hello World"
+```
+
+### 🧪 Testing
+
+- **NEW**: `interpolation.test.tsx` with 21 comprehensive test cases
+- **NEW**: Tests for Client-side variable interpolation
+- **NEW**: Tests for Server-side variable interpolation
+- **NEW**: Tests for styled variables
+- **NEW**: Tests for edge cases (special characters, large numbers, etc.)
+
+### 📦 Package Configuration
+
+- **NEW**: `.npmignore` file for cleaner npm package
+- **IMPROVED**: Package excludes test files, examples, and documentation
+- **IMPROVED**: Smaller package size with optimized file inclusion
+
 ## [2.5.0] - 2025-01-15
 
 ## [2.5.2] - 2025-10-20

@@ -122,9 +122,34 @@ export function parseCookies(
 }
 
 /**
+ * Variables for string interpolation in server translations
+ */
+export type ServerTranslationVariables = Record<string, string | number>;
+
+/**
+ * Replace variables in a server translation string
+ * @param text - Text with {{variable}} placeholders
+ * @param variables - Object with variable values
+ * @returns Text with variables replaced
+ */
+function interpolateServer(
+  text: string,
+  variables?: ServerTranslationVariables
+): string {
+  if (!variables) {
+    return text;
+  }
+
+  return text.replace(/\{\{(\w+)\}\}/g, (match, variableName) => {
+    const value = variables[variableName];
+    return value !== undefined ? String(value) : match;
+  });
+}
+
+/**
  * Create server-side translation function for use in Server Components
  *
- * @example
+ * @example Basic usage
  * ```tsx
  * import { createServerTranslation } from 'i18nexus/server';
  * import { translations } from '@/lib/i18n';
@@ -137,6 +162,12 @@ export function parseCookies(
  *   return <h1>{t("Welcome")}</h1>;
  * }
  * ```
+ *
+ * @example With variables
+ * ```tsx
+ * const t = createServerTranslation(language, translations);
+ * return <p>{t("환영합니다 {{count}}", { count: 5 })}</p>;
+ * ```
  */
 export function createServerTranslation(
   language: string,
@@ -145,8 +176,21 @@ export function createServerTranslation(
   const currentTranslations =
     translations[language] || translations["en"] || {};
 
-  return function translate(key: string, fallback?: string): string {
-    return currentTranslations[key] || fallback || key;
+  return function translate(
+    key: string,
+    variables?: ServerTranslationVariables | string,
+    fallback?: string
+  ): string {
+    // Handle legacy fallback parameter (2nd parameter as string)
+    if (typeof variables === "string") {
+      return currentTranslations[key] || variables || key;
+    }
+
+    // Get translated text
+    const translatedText = currentTranslations[key] || fallback || key;
+
+    // Apply variable interpolation if variables provided
+    return interpolateServer(translatedText, variables);
   };
 }
 
