@@ -18,7 +18,7 @@ export interface I18nContextType<TLanguage extends string = string> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const I18nContext = React.createContext<I18nContextType<any> | null>(
-  null
+  null,
 );
 
 export const useI18nContext = <
@@ -51,7 +51,7 @@ export function I18nProvider<TLanguage extends string = string>({
   initialLanguage,
 }: I18nProviderProps<TLanguage>) {
   const [languageManager] = React.useState(
-    () => new LanguageManager(languageManagerOptions)
+    () => new LanguageManager(languageManagerOptions),
   );
 
   // Use initialLanguage (from server) if provided, otherwise use default
@@ -64,7 +64,7 @@ export function I18nProvider<TLanguage extends string = string>({
   };
 
   const [currentLanguage, setCurrentLanguage] = React.useState<TLanguage>(
-    getInitialLanguage() as TLanguage
+    getInitialLanguage() as TLanguage,
   );
   const [isLoading, setIsLoading] = React.useState(false);
   const [isHydrated, setIsHydrated] = React.useState(false);

@@ -54,16 +54,17 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent
             translationKey="Hello {{name}}"
             variables={{ name: "World" }}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       expect(screen.getByTestId("translation")).toHaveTextContent(
-        "Hello World"
+        "Hello World",
       );
     });
 
@@ -72,16 +73,17 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent
             translationKey="Price: {{price}} ({{discount}}% off)"
             variables={{ price: 100, discount: 20 }}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       expect(screen.getByTestId("translation")).toHaveTextContent(
-        "Price: 100 (20% off)"
+        "Price: 100 (20% off)",
       );
     });
 
@@ -90,16 +92,17 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="ko"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "ko" }}>
+          languageManagerOptions={{ defaultLanguage: "ko" }}
+        >
           <TestComponent
             translationKey="Hello {{name}}"
             variables={{ name: "홍길동" }}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       expect(screen.getByTestId("translation")).toHaveTextContent(
-        "안녕하세요 홍길동님"
+        "안녕하세요 홍길동님",
       );
     });
 
@@ -108,13 +111,14 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent translationKey="Hello {{name}}" />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       expect(screen.getByTestId("translation")).toHaveTextContent(
-        "Hello {{name}}"
+        "Hello {{name}}",
       );
     });
 
@@ -123,16 +127,17 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent
             translationKey="You have {{count}} messages"
             variables={{ count: 5 }}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       expect(screen.getByTestId("translation")).toHaveTextContent(
-        "You have 5 messages"
+        "You have 5 messages",
       );
     });
 
@@ -141,9 +146,10 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent translationKey="Welcome" />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       expect(screen.getByTestId("translation")).toHaveTextContent("Welcome");
@@ -154,13 +160,14 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent
             translationKey="Hello {{name}}"
             variables={{ name: "World" }}
             styles={{ name: { color: "red", fontWeight: "bold" } }}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       const container = screen.getByTestId("translation");
@@ -176,7 +183,8 @@ describe("Variable Interpolation", () => {
         <I18nProvider
           initialLanguage="en"
           translations={testTranslations}
-          languageManagerOptions={{ defaultLanguage: "en" }}>
+          languageManagerOptions={{ defaultLanguage: "en" }}
+        >
           <TestComponent
             translationKey="Price: {{price}} ({{discount}}% off)"
             variables={{ price: 100, discount: 20 }}
@@ -185,7 +193,7 @@ describe("Variable Interpolation", () => {
               discount: { color: "red", fontWeight: "bold" },
             }}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
 
       const container = screen.getByTestId("translation");

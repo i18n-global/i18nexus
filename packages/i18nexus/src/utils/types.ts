@@ -55,7 +55,7 @@ export type ExtractLanguages<T extends I18nexusConfig<readonly string[]>> =
  * ```
  */
 export function defineConfig<TLanguages extends readonly string[]>(
-  config: I18nexusConfig<TLanguages>
+  config: I18nexusConfig<TLanguages>,
 ): I18nexusConfig<TLanguages> {
   return config;
 }

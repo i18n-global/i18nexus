@@ -36,7 +36,7 @@ export interface TranslationFunction {
   (
     key: string,
     variables: TranslationVariables,
-    styles: TranslationStyles
+    styles: TranslationStyles,
   ): React.ReactElement;
 
   /**
@@ -79,7 +79,7 @@ export interface UseTranslationReturn {
  */
 const interpolate = (
   text: string,
-  variables?: TranslationVariables
+  variables?: TranslationVariables,
 ): string => {
   if (!variables) {
     return text;
@@ -101,7 +101,7 @@ const interpolate = (
 const interpolateWithStyles = (
   text: string,
   variables: TranslationVariables,
-  styles: TranslationStyles
+  styles: TranslationStyles,
 ): React.ReactElement => {
   // Split text by variable placeholders
   const parts: (string | React.ReactElement)[] = [];
@@ -127,8 +127,8 @@ const interpolateWithStyles = (
           React.createElement(
             "span",
             { key: `var-${key++}`, style: style },
-            String(value)
-          )
+            String(value),
+          ),
         );
       } else {
         // Just add the value as string
@@ -160,7 +160,7 @@ export const useTranslation = (): UseTranslationReturn => {
   const translate: TranslationFunction = ((
     key: string,
     variables?: TranslationVariables,
-    styles?: TranslationStyles
+    styles?: TranslationStyles,
   ): string | React.ReactElement => {
     const currentTranslations = translations[currentLanguage] || {};
     const translatedText = currentTranslations[key] || key;

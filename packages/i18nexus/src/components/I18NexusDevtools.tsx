@@ -132,7 +132,8 @@ export function I18NexusDevtools({
             e.currentTarget.style.backgroundColor = "#6366f1";
             e.currentTarget.style.transform = "translateY(0)";
             e.currentTarget.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
-          }}>
+          }}
+        >
           <span style={{ fontSize: "18px" }}>🌐</span>
           <span>i18nexus</span>
         </button>
@@ -153,7 +154,8 @@ export function I18NexusDevtools({
             fontFamily:
               '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             ...panelStyles,
-          }}>
+          }}
+        >
           {/* Header */}
           <div
             style={{
@@ -166,7 +168,8 @@ export function I18NexusDevtools({
               cursor: isDragging ? "grabbing" : "grab",
             }}
             onMouseDown={() => setIsDragging(true)}
-            onMouseUp={() => setIsDragging(false)}>
+            onMouseUp={() => setIsDragging(false)}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ fontSize: "20px" }}>🌐</span>
               <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "600" }}>
@@ -194,7 +197,8 @@ export function I18NexusDevtools({
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-              }}>
+              }}
+            >
               ✕
             </button>
           </div>
@@ -205,7 +209,8 @@ export function I18NexusDevtools({
               padding: "16px",
               overflowY: "auto",
               flex: 1,
-            }}>
+            }}
+          >
             {/* Current Language Section */}
             <div style={{ marginBottom: "20px" }}>
               <h4
@@ -214,7 +219,8 @@ export function I18NexusDevtools({
                   fontSize: "14px",
                   fontWeight: "600",
                   color: "#374151",
-                }}>
+                }}
+              >
                 Current Language
               </h4>
               <div
@@ -225,7 +231,8 @@ export function I18NexusDevtools({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                }}>
+                }}
+              >
                 <div>
                   <div style={{ fontSize: "18px", fontWeight: "600" }}>
                     {currentLanguage.toUpperCase()}
@@ -258,7 +265,8 @@ export function I18NexusDevtools({
                   fontSize: "14px",
                   fontWeight: "600",
                   color: "#374151",
-                }}>
+                }}
+              >
                 Browser Language
               </h4>
               <div
@@ -269,7 +277,8 @@ export function I18NexusDevtools({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                }}>
+                }}
+              >
                 <div style={{ fontSize: "14px", color: "#6b7280" }}>
                   {browserLanguage?.toUpperCase() || "Not detected"}
                 </div>
@@ -292,7 +301,8 @@ export function I18NexusDevtools({
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "#10b981";
-                    }}>
+                    }}
+                  >
                     Switch
                   </button>
                 )}
@@ -307,7 +317,8 @@ export function I18NexusDevtools({
                   fontSize: "14px",
                   fontWeight: "600",
                   color: "#374151",
-                }}>
+                }}
+              >
                 Available Languages ({availableLanguages.length})
               </h4>
               <div
@@ -315,7 +326,8 @@ export function I18NexusDevtools({
                   display: "flex",
                   flexDirection: "column",
                   gap: "8px",
-                }}>
+                }}
+              >
                 {availableLanguages.map((lang) => (
                   <button
                     key={lang.code}
@@ -357,7 +369,8 @@ export function I18NexusDevtools({
                         e.currentTarget.style.backgroundColor = "white";
                         e.currentTarget.style.opacity = "0.8";
                       }
-                    }}>
+                    }}
+                  >
                     <div>
                       <div style={{ fontWeight: "600" }}>
                         {lang.code.toUpperCase()}
@@ -367,7 +380,8 @@ export function I18NexusDevtools({
                           fontSize: "12px",
                           opacity: 0.8,
                           marginTop: "2px",
-                        }}>
+                        }}
+                      >
                         {lang.name}
                       </div>
                     </div>
@@ -387,7 +401,8 @@ export function I18NexusDevtools({
                   fontSize: "14px",
                   fontWeight: "600",
                   color: "#374151",
-                }}>
+                }}
+              >
                 Translation Stats
               </h4>
               <div
@@ -395,13 +410,15 @@ export function I18NexusDevtools({
                   backgroundColor: "#f3f4f6",
                   padding: "12px",
                   borderRadius: "8px",
-                }}>
+                }}
+              >
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     marginBottom: "8px",
-                  }}>
+                  }}
+                >
                   <span style={{ fontSize: "14px", color: "#6b7280" }}>
                     Keys Loaded:
                   </span>
@@ -413,7 +430,8 @@ export function I18NexusDevtools({
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                  }}>
+                  }}
+                >
                   <span style={{ fontSize: "14px", color: "#6b7280" }}>
                     Languages:
                   </span>
@@ -432,7 +450,8 @@ export function I18NexusDevtools({
                   fontSize: "14px",
                   fontWeight: "600",
                   color: "#374151",
-                }}>
+                }}
+              >
                 Actions
               </h4>
               <button
@@ -462,7 +481,8 @@ export function I18NexusDevtools({
                     e.currentTarget.style.backgroundColor = "white";
                     e.currentTarget.style.color = "#ef4444";
                   }
-                }}>
+                }}
+              >
                 Reset to Default Language
               </button>
             </div>
@@ -477,7 +497,8 @@ export function I18NexusDevtools({
               fontSize: "12px",
               color: "#6b7280",
               textAlign: "center",
-            }}>
+            }}
+          >
             💡 Dev mode only • Press ESC to close
           </div>
         </div>

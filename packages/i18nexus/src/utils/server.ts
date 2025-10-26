@@ -77,7 +77,7 @@ export function getServerLanguage(
   options?: {
     cookieName?: string;
     defaultLanguage?: string;
-  }
+  },
 ): string {
   const cookieName = options?.cookieName || "i18n-language";
   const defaultLanguage = options?.defaultLanguage || "en";
@@ -102,7 +102,7 @@ export function getServerLanguage(
  * Parse cookies from cookie header string
  */
 export function parseCookies(
-  cookieHeader: string | null
+  cookieHeader: string | null,
 ): Record<string, string> {
   if (!cookieHeader) {
     return {};
@@ -134,7 +134,7 @@ export type ServerTranslationVariables = Record<string, string | number>;
  */
 function interpolateServer(
   text: string,
-  variables?: ServerTranslationVariables
+  variables?: ServerTranslationVariables,
 ): string {
   if (!variables) {
     return text;
@@ -171,7 +171,7 @@ function interpolateServer(
  */
 export function createServerTranslation(
   language: string,
-  translations: Record<string, Record<string, string>>
+  translations: Record<string, Record<string, string>>,
 ) {
   const currentTranslations =
     translations[language] || translations["en"] || {};
@@ -179,7 +179,7 @@ export function createServerTranslation(
   return function translate(
     key: string,
     variables?: ServerTranslationVariables | string,
-    fallback?: string
+    fallback?: string,
   ): string {
     // Handle legacy fallback parameter (2nd parameter as string)
     if (typeof variables === "string") {
@@ -213,7 +213,7 @@ export function createServerTranslation(
  */
 export function getServerTranslations(
   language: string,
-  translations: Record<string, Record<string, string>>
+  translations: Record<string, Record<string, string>>,
 ): Record<string, string> {
   return translations[language] || translations["en"] || {};
 }
@@ -231,7 +231,7 @@ export function getServerTranslations(
  * ```
  */
 export async function loadTranslations(
-  localesDir: string
+  localesDir: string,
 ): Promise<Record<string, Record<string, string>>> {
   try {
     // Try to import the index file
@@ -241,7 +241,7 @@ export async function loadTranslations(
   } catch (error) {
     console.warn(
       `Failed to load translations from ${localesDir}/index:`,
-      error
+      error,
     );
     return {};
   }
@@ -294,6 +294,8 @@ export async function createServerI18n(options?: {
   let headersInstance: Headers;
   try {
     // Dynamically import Next.js headers
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - next/headers is an optional peer dependency
     const { headers } = await import("next/headers");
     headersInstance = await headers();
   } catch (error) {
@@ -346,7 +348,7 @@ export function createServerI18nWithTranslations(
   options?: {
     cookieName?: string;
     defaultLanguage?: string;
-  }
+  },
 ) {
   const language = getServerLanguage(headers, options);
   const t = createServerTranslation(language, translations);
