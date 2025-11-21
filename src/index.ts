@@ -39,6 +39,45 @@ export type {
   TranslationLanguages,
 } from "./utils/createI18n";
 
+// Advanced type-safe i18n with variable inference (most advanced)
+export { createI18nAdvanced } from "./utils/createI18nAdvanced";
+export type { ExtractRequiredVariables } from "./utils/createI18nAdvanced";
+
+// Namespace support for nested translations
+export { createI18nNamespace, getNestedKeys } from "./utils/createI18nNamespace";
+
+// Translation validation utilities
+export {
+  validateTranslationCompleteness,
+  validateNestedTranslationCompleteness,
+  getTranslationStats,
+  findUnusedKeys,
+  generateCoverageReport,
+  assertTranslationCompleteness,
+} from "./utils/translationValidation";
+export type { ValidationResult } from "./utils/advancedTypes";
+
+// Pluralization support
+export {
+  getPluralForm,
+  selectPlural,
+  createPluralTranslation,
+  interpolatePlural,
+  pluralWithInterpolation,
+  pluralize,
+  getSupportedPluralForms,
+} from "./utils/pluralization";
+export type { PluralForm, PluralOptions } from "./utils/advancedTypes";
+
+// Advanced type utilities
+export type {
+  ExtractVariables,
+  HasVariables,
+  TranslationVariablesFor,
+  NestedKeyOf,
+  GetNestedValue,
+} from "./utils/advancedTypes";
+
 // Utils
 export {
   setCookie,

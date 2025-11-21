@@ -7,6 +7,14 @@ export { useTranslation, useLanguageSwitcher } from "./hooks/useTranslation";
 export { createTypedTranslation, createTypedTranslationWithStyles, createMultiLangTypedTranslation, validateTranslationKeys, getTranslationKeyList, } from "./utils/typeTranslation";
 // Modern type-safe i18n creator (recommended)
 export { createI18n } from "./utils/createI18n";
+// Advanced type-safe i18n with variable inference (most advanced)
+export { createI18nAdvanced } from "./utils/createI18nAdvanced";
+// Namespace support for nested translations
+export { createI18nNamespace, getNestedKeys } from "./utils/createI18nNamespace";
+// Translation validation utilities
+export { validateTranslationCompleteness, validateNestedTranslationCompleteness, getTranslationStats, findUnusedKeys, generateCoverageReport, assertTranslationCompleteness, } from "./utils/translationValidation";
+// Pluralization support
+export { getPluralForm, selectPlural, createPluralTranslation, interpolatePlural, pluralWithInterpolation, pluralize, getSupportedPluralForms, } from "./utils/pluralization";
 // Utils
 export { setCookie, getCookie, deleteCookie, getAllCookies, } from "./utils/cookie";
 // Language Manager

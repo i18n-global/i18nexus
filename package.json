@@ -16,6 +16,11 @@
       "types": "./dist/utils/server.d.ts",
       "import": "./dist/utils/server.js",
       "default": "./dist/utils/server.js"
+    },
+    "./server-advanced": {
+      "types": "./dist/utils/serverAdvanced.d.ts",
+      "import": "./dist/utils/serverAdvanced.js",
+      "default": "./dist/utils/serverAdvanced.js"
     }
   },
   "scripts": {
