@@ -26,5 +26,9 @@ export { LanguageManager, defaultLanguageManager, } from "./utils/languageManage
 export type { LanguageConfig, LanguageManagerOptions, } from "./utils/languageManager";
 export { defineConfig } from "./utils/types";
 export type { ExtractLanguages } from "./utils/types";
+export { validateConfig, toNamespaceFallbackConfig, toDynamicTranslationOptions, isValidConfig, defaultConfig, } from "./utils/config";
+export type { I18nexusConfig } from "./utils/config";
+export { loadConfigFromFile, loadConfigFromFileSync, loadConfig, loadConfigFromEnv, saveConfigToFile, hasConfigFile, getConfigPath, } from "./utils/configLoader";
+export { createI18nFromConfig, createI18nFromConfigFile, useI18nFromConfig, I18nConfigProvider, getLanguageManagerOptions, } from "./utils/createFromConfig";
 export { createDynamicTranslation, buildTranslationParams, buildConditionalTranslation, mapToTranslationParams, } from "./utils/dynamicTranslation";
 //# sourceMappingURL=index.d.ts.map

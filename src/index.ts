@@ -122,6 +122,36 @@ export type {
 export { defineConfig } from "./utils/types";
 export type { ExtractLanguages } from "./utils/types";
 
+// Configuration management (central config file support)
+export {
+  validateConfig,
+  toNamespaceFallbackConfig,
+  toDynamicTranslationOptions,
+  isValidConfig,
+  defaultConfig,
+} from "./utils/config";
+export type { I18nexusConfig } from "./utils/config";
+
+// Configuration loaders
+export {
+  loadConfigFromFile,
+  loadConfigFromFileSync,
+  loadConfig,
+  loadConfigFromEnv,
+  saveConfigToFile,
+  hasConfigFile,
+  getConfigPath,
+} from "./utils/configLoader";
+
+// Config-based i18n creation
+export {
+  createI18nFromConfig,
+  createI18nFromConfigFile,
+  useI18nFromConfig,
+  I18nConfigProvider,
+  getLanguageManagerOptions,
+} from "./utils/createFromConfig";
+
 // Dynamic translation utilities
 export {
   createDynamicTranslation,

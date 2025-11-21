@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "i18nexus Configuration Example",
+  "description": "Complete example of i18nexus.config.json with all options",
+
+  "defaultLanguage": "en",
+
+  "languages": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English",
+      "dir": "ltr"
+    },
+    {
+      "code": "ko",
+      "name": "Korean",
+      "nativeName": "한국어",
+      "dir": "ltr"
+    },
+    {
+      "code": "ja",
+      "name": "Japanese",
+      "nativeName": "日本語",
+      "dir": "ltr"
+    },
+    {
+      "code": "ar",
+      "name": "Arabic",
+      "nativeName": "العربية",
+      "dir": "rtl"
+    }
+  ],
+
+  "localesDir": "./locales",
+  "cookieName": "i18n-language",
+
+  "cookieOptions": {
+    "maxAge": 31536000,
+    "path": "/",
+    "secure": true,
+    "sameSite": "lax"
+  },
+
+  "namespaces": {
+    "enabled": true,
+    "defaultNamespace": "common",
+    "fallbackChain": {
+      "pages": ["common"],
+      "modals": ["common"],
+      "errors": ["common"],
+      "forms": ["common"]
+    }
+  },
+
+  "fallback": {
+    "languages": {
+      "ko": ["en"],
+      "ja": ["en"],
+      "ar": ["en"]
+    },
+    "showWarnings": true
+  },
+
+  "dynamic": {
+    "prefix": null,
+    "suffix": null,
+    "fallback": "Translation missing",
+    "showWarnings": true
+  },
+
+  "validation": {
+    "enabled": true,
+    "minCoverage": 100,
+    "strict": false
+  },
+
+  "server": {
+    "detectBrowserLanguage": true,
+    "preloadTranslations": true
+  },
+
+  "client": {
+    "cacheTranslations": false,
+    "cacheExpiration": 86400000
+  },
+
+  "devtools": {
+    "enabled": true,
+    "position": "bottom-right"
+  },
+
+  "metadata": {
+    "project": "My Awesome App",
+    "version": "1.0.0",
+    "author": "Your Name"
+  }
+}
