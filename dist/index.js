@@ -5,6 +5,8 @@ export { I18NexusDevtools } from "./components/I18NexusDevtools";
 export { useTranslation, useLanguageSwitcher } from "./hooks/useTranslation";
 // Type-safe translation utilities
 export { createTypedTranslation, createTypedTranslationWithStyles, createMultiLangTypedTranslation, validateTranslationKeys, getTranslationKeyList, } from "./utils/typeTranslation";
+// Modern type-safe i18n creator (recommended)
+export { createI18n } from "./utils/createI18n";
 // Utils
 export { setCookie, getCookie, deleteCookie, getAllCookies, } from "./utils/cookie";
 // Language Manager

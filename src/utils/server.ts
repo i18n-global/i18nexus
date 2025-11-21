@@ -280,23 +280,34 @@ export function createServerTranslation(
  *
  * @example
  * ```tsx
- * import { getServerTranslations } from 'i18nexus/server';
+ * import { getTranslations } from 'i18nexus/server';
  * import { translations } from '@/lib/i18n';
  *
  * export default async function ServerPage() {
  *   const headersList = await headers();
  *   const language = getServerLanguage(headersList);
- *   const dict = getServerTranslations(language, translations);
+ *   const dict = getTranslations(language, translations);
  *
  *   return <h1>{dict["Welcome"]}</h1>;
  * }
  * ```
  */
-export function getServerTranslations(
+export function getTranslations(
   language: string,
   translations: Record<string, Record<string, string>>,
 ): Record<string, string> {
   return translations[language] || translations["en"] || {};
+}
+
+/**
+ * @deprecated Use `getTranslations` instead
+ * This function is kept for backward compatibility and will be removed in a future version
+ */
+export function getServerTranslations(
+  language: string,
+  translations: Record<string, Record<string, string>>,
+): Record<string, string> {
+  return getTranslations(language, translations);
 }
 
 /**
@@ -408,7 +419,7 @@ export async function createServerI18n(options?: {
     options?.translations || (await loadTranslations(localesDir));
 
   const t = createServerTranslation(language, translations);
-  const dict = getServerTranslations(language, translations);
+  const dict = getTranslations(language, translations);
 
   return {
     t,
@@ -460,7 +471,7 @@ export function createServerI18nWithTranslations(
 ) {
   const language = getServerLanguage(headers, options);
   const t = createServerTranslation(language, translations);
-  const dict = getServerTranslations(language, translations);
+  const dict = getTranslations(language, translations);
 
   return {
     t,

@@ -32,6 +32,13 @@ export type {
   ExtractLanguageKeys,
 } from "./utils/typeTranslation";
 
+// Modern type-safe i18n creator (recommended)
+export { createI18n } from "./utils/createI18n";
+export type {
+  TranslationKeys,
+  TranslationLanguages,
+} from "./utils/createI18n";
+
 // Utils
 export {
   setCookie,

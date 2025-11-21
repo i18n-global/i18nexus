@@ -86,17 +86,22 @@ export declare function createServerTranslation(language: string, translations: 
  *
  * @example
  * ```tsx
- * import { getServerTranslations } from 'i18nexus/server';
+ * import { getTranslations } from 'i18nexus/server';
  * import { translations } from '@/lib/i18n';
  *
  * export default async function ServerPage() {
  *   const headersList = await headers();
  *   const language = getServerLanguage(headersList);
- *   const dict = getServerTranslations(language, translations);
+ *   const dict = getTranslations(language, translations);
  *
  *   return <h1>{dict["Welcome"]}</h1>;
  * }
  * ```
+ */
+export declare function getTranslations(language: string, translations: Record<string, Record<string, string>>): Record<string, string>;
+/**
+ * @deprecated Use `getTranslations` instead
+ * This function is kept for backward compatibility and will be removed in a future version
  */
 export declare function getServerTranslations(language: string, translations: Record<string, Record<string, string>>): Record<string, string>;
 /**

@@ -219,20 +219,27 @@ export function createServerTranslation(language, translations) {
  *
  * @example
  * ```tsx
- * import { getServerTranslations } from 'i18nexus/server';
+ * import { getTranslations } from 'i18nexus/server';
  * import { translations } from '@/lib/i18n';
  *
  * export default async function ServerPage() {
  *   const headersList = await headers();
  *   const language = getServerLanguage(headersList);
- *   const dict = getServerTranslations(language, translations);
+ *   const dict = getTranslations(language, translations);
  *
  *   return <h1>{dict["Welcome"]}</h1>;
  * }
  * ```
  */
-export function getServerTranslations(language, translations) {
+export function getTranslations(language, translations) {
     return translations[language] || translations["en"] || {};
+}
+/**
+ * @deprecated Use `getTranslations` instead
+ * This function is kept for backward compatibility and will be removed in a future version
+ */
+export function getServerTranslations(language, translations) {
+    return getTranslations(language, translations);
 }
 /**
  * Load translations from a directory (for use with auto-generated index.ts)
@@ -327,7 +334,7 @@ export async function createServerI18n(options) {
     // Use provided translations or load from directory
     const translations = options?.translations || (await loadTranslations(localesDir));
     const t = createServerTranslation(language, translations);
-    const dict = getServerTranslations(language, translations);
+    const dict = getTranslations(language, translations);
     return {
         t,
         language,
@@ -369,7 +376,7 @@ export async function createServerI18n(options) {
 export function createServerI18nWithTranslations(headers, translations, options) {
     const language = getServerLanguage(headers, options);
     const t = createServerTranslation(language, translations);
-    const dict = getServerTranslations(language, translations);
+    const dict = getTranslations(language, translations);
     return {
         t,
         language,

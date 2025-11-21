@@ -170,9 +170,7 @@ export function I18nProvider<
   };
 
   return (
-    <I18nContext.Provider
-      value={contextValue as unknown as I18nContextType<string, string>}
-    >
+    <I18nContext.Provider value={contextValue as any}>
       {children}
     </I18nContext.Provider>
   );

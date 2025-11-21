@@ -6,6 +6,8 @@ export { useTranslation, useLanguageSwitcher } from "./hooks/useTranslation";
 export type { UseTranslationReturn, UseLanguageSwitcherReturn, TranslationVariables, TranslationStyles, VariableStyle, TranslationFunction, } from "./hooks/useTranslation";
 export { createTypedTranslation, createTypedTranslationWithStyles, createMultiLangTypedTranslation, validateTranslationKeys, getTranslationKeyList, } from "./utils/typeTranslation";
 export type { ExtractTranslationKeys, ExtractLanguageKeys, } from "./utils/typeTranslation";
+export { createI18n } from "./utils/createI18n";
+export type { TranslationKeys, TranslationLanguages, } from "./utils/createI18n";
 export { setCookie, getCookie, deleteCookie, getAllCookies, } from "./utils/cookie";
 export type { CookieOptions } from "./utils/cookie";
 export { LanguageManager, defaultLanguageManager, } from "./utils/languageManager";
