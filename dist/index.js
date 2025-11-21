@@ -11,6 +11,10 @@ export { createI18n } from "./utils/createI18n";
 export { createI18nAdvanced } from "./utils/createI18nAdvanced";
 // Namespace support for nested translations
 export { createI18nNamespace, getNestedKeys } from "./utils/createI18nNamespace";
+// Namespace with fallback support (most flexible)
+export { createI18nWithFallback, createScopedTranslation, useScopedTranslation, } from "./utils/namespaceFallback";
+// Dynamic translation wrapper (for runtime keys)
+export { useDynamicTranslation, mapDynamicTranslations, createDynamicTranslationMap, useDynamicTranslationValue, useDynamicTranslationMap, } from "./utils/dynamicTranslationWrapper";
 // Translation validation utilities
 export { validateTranslationCompleteness, validateNestedTranslationCompleteness, getTranslationStats, findUnusedKeys, generateCoverageReport, assertTranslationCompleteness, } from "./utils/translationValidation";
 // Pluralization support

@@ -11,6 +11,10 @@ export type { TranslationKeys, TranslationLanguages, } from "./utils/createI18n"
 export { createI18nAdvanced } from "./utils/createI18nAdvanced";
 export type { ExtractRequiredVariables } from "./utils/createI18nAdvanced";
 export { createI18nNamespace, getNestedKeys } from "./utils/createI18nNamespace";
+export { createI18nWithFallback, createScopedTranslation, useScopedTranslation, } from "./utils/namespaceFallback";
+export type { NamespaceFallbackConfig } from "./utils/namespaceFallback";
+export { useDynamicTranslation, mapDynamicTranslations, createDynamicTranslationMap, useDynamicTranslationValue, useDynamicTranslationMap, } from "./utils/dynamicTranslationWrapper";
+export type { DynamicTranslationOptions, DynamicTranslationFunction, } from "./utils/dynamicTranslationWrapper";
 export { validateTranslationCompleteness, validateNestedTranslationCompleteness, getTranslationStats, findUnusedKeys, generateCoverageReport, assertTranslationCompleteness, } from "./utils/translationValidation";
 export type { ValidationResult } from "./utils/advancedTypes";
 export { getPluralForm, selectPlural, createPluralTranslation, interpolatePlural, pluralWithInterpolation, pluralize, getSupportedPluralForms, } from "./utils/pluralization";

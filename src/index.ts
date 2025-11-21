@@ -46,6 +46,27 @@ export type { ExtractRequiredVariables } from "./utils/createI18nAdvanced";
 // Namespace support for nested translations
 export { createI18nNamespace, getNestedKeys } from "./utils/createI18nNamespace";
 
+// Namespace with fallback support (most flexible)
+export {
+  createI18nWithFallback,
+  createScopedTranslation,
+  useScopedTranslation,
+} from "./utils/namespaceFallback";
+export type { NamespaceFallbackConfig } from "./utils/namespaceFallback";
+
+// Dynamic translation wrapper (for runtime keys)
+export {
+  useDynamicTranslation,
+  mapDynamicTranslations,
+  createDynamicTranslationMap,
+  useDynamicTranslationValue,
+  useDynamicTranslationMap,
+} from "./utils/dynamicTranslationWrapper";
+export type {
+  DynamicTranslationOptions,
+  DynamicTranslationFunction,
+} from "./utils/dynamicTranslationWrapper";
+
 // Translation validation utilities
 export {
   validateTranslationCompleteness,
